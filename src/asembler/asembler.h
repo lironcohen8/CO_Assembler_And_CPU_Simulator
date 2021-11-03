@@ -39,3 +39,7 @@ typedef enum {
     HALT
 } opcode_e;
 
+typedef struct {
+    char label[MAX_LABEL_LENGTH];
+    int op_index;
+} label_t;
