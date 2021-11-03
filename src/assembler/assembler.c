@@ -1,11 +1,11 @@
 #include "assembler.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define BASE_ARR_SIZE (10)
 #define ARR_SIZE_MULTIPLY (2)
 
-char* strcpy(char* destination, const char* source);
 
 int main(int argc, char const *argv[])
 {
@@ -22,15 +22,18 @@ int main(int argc, char const *argv[])
         for (int i = 0 ; i < MAX_LABEL_LENGTH + 1; i++) {
             if (buffer[i] == ':') {
                 buffer[i] = '\0';
-                tmp_label_str = (char *) malloc(MAX_LABEL_LENGTH * sizeof(char));
+                tmp_label_str = (char *) malloc(i + 1);
                 strcpy(tmp_label_str, buffer);
-                label_t tmp_label = {.label = tmp_label_str, .op_index = line_counter--}; /* label lines don't count as instruction lines */
+
+                label_t tmp_label = {
+                    .label = tmp_label_str,
+                    .op_index = line_counter--}; /* label lines don't count as instruction lines */
+                
                 if (label_counter == curr_arr_len)
                 {
                     curr_arr_len *= ARR_SIZE_MULTIPLY;
                     labels_list = (label_t*)realloc(labels_list, curr_arr_len * sizeof(label_t));
                 }
-                
                 labels_list[label_counter++] = tmp_label;
                 break;
             }
