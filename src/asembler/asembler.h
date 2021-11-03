@@ -5,7 +5,7 @@
 #define MAX_LABEL_LENGTH (50)
 
 typedef struct {
-    uint8_t opcode :  8;
+    opcode_e opcode:  8;
     reg_e rd       :  4;
     reg_e rs       :  4;
     reg_e rt       :  4;
