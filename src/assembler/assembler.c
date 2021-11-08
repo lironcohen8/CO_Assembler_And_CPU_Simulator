@@ -107,8 +107,9 @@ static int does_line_contain_label(char *line) {
 
 static void decode_mips_to_hex(FILE *output_file, char *line)
 {
-    char *opcode, rd, rs, rt, rm, imm1, imm2;
-    sscanf(line, "%s $%s, $%s, $%s, $%s, $%s, $%s", &opcode, &rd, &rs, &rt, &rm, &imm1, &imm2);
+    printf("%s", line);
+    char *opcode, *rd, *rs, *rt, *rm, *imm1, *imm2;
+    sscanf(line, "%s $%s, $%s, $%s, $%s, $%s, $%s", opcode, rd, rs, rt, rm, imm1, imm2);
 
     int opcode_d, rd_d, rs_d, rt_d, rm_d, imm1_d, imm2_d;
     opcode_d = get_opcode_num(opcode);
@@ -178,6 +179,7 @@ int main(int argc, char const *argv[])
     printf("hi");
 
     FILE *output_instr_file = fopen(OUTPUT_INSTR_FILE_NAME, "w");
+    rewind(asm_program);
     while (fgets(buffer, MAX_LINE_LENGTH, asm_program) != NULL)
     {
         if (does_line_contain_label(buffer) == 0) {
