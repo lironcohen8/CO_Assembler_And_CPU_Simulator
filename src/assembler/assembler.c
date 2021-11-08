@@ -108,9 +108,8 @@ static int does_line_contain_label(char *line) {
 static void decode_mips_to_hex(FILE *output_file, char *line)
 {
     printf("%s", line);
-    char *opcode, *rd, *rs, *rt, *rm, *imm1, *imm2;
-    //sscanf(line, "%s %s %s %s %s %s %s", opcode, rd, rs, rt, rm, imm1, imm2);
-    sscanf(line, "%s", opcode);
+    char opcode[10], rd[10], rs[10], rt[10], rm[10], imm1[32], imm2[32];
+    sscanf(line, " %[^ $] $%[^,], $%[^,], $%[^,], $%[^,], %[^,], %s ",  opcode, rd, rs, rt, rm, imm1, imm2);
 
     int opcode_d, rd_d, rs_d, rt_d, rm_d, imm1_d, imm2_d;
     opcode_d = get_opcode_num(opcode);
