@@ -41,5 +41,5 @@ typedef struct {
 
 typedef struct {
     char * label;
-    int op_index;
+    int cmd_index;
 } label_t;
