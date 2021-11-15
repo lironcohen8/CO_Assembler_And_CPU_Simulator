@@ -7,6 +7,7 @@
 #define BASE_ARR_SIZE (10)
 #define ARR_SIZE_MULTIPLY (2)
 #define OPCODES_NUM (22)
+#define MAX_OPCODE_LENGTH (5)
 #define REGS_NUM (16)
 #define MAX_ASSEMBLY_LINES (4096)
 #define MAX_MEMORY_SIZE (4096)
@@ -150,7 +151,7 @@ static void decode_mips_to_hex(FILE *output_file, char *line)
 /*Line functions*/
 static void clearLeadingWhitespaces(char** line){
     while (isspace((char)**line)){
-        *line++;
+        (*line)++;
     }
 }
 
@@ -180,8 +181,8 @@ static int isLineWord(char* line){
 }
 
 static int labelLineHasCommand(char* line){
-    char* firstWord;
-    scanf(line,"%s",&firstWord);
+    char firstWord[MAX_OPCODE_LENGTH];
+    sscanf(line,"%s",firstWord);
     return get_opcode_num(firstWord)>-1;
 }
 
@@ -200,7 +201,7 @@ static void firstPass(FILE* asm_program){
 
     while (fgets(line, MAX_LINE_LENGTH, asm_program) != NULL){
         clearLeadingWhitespaces(&line); 
-        if ((line[0]=='\n')||(isLineComment(line)==0)){ /*If the line is empty or just a comment*/
+        if ((line[0]!='\n')&&(isLineComment(line)==0)){ /*If the line is empty or just a comment*/
             colonIndex=lineHasLabel(line); /*If line starts with label then returns ':' index else -1*/
             if (colonIndex!=-1){
                 line[colonIndex] = '\0';
@@ -231,7 +232,7 @@ static void firstPass(FILE* asm_program){
 int main(int argc, char const *argv[]) {
     FILE* asm_program = fopen(argv[1], "r");
     firstPass(asm_program);
-
+    printf("hi");
     /*
     FILE *output_instr_file = fopen(OUTPUT_INSTR_FILE_NAME, "w");
     rewind(asm_program);
