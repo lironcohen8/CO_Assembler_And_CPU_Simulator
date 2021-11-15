@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <inttypes.h>
 
 #define BASE_ARR_SIZE (10)
 #define ARR_SIZE_MULTIPLY (2)
@@ -143,7 +144,7 @@ static void decode_cmds_to_output_file(FILE *output_file, char *line)
         imm2_d = atoi(imm2);
     }
 
-    fprintf(output_file, "%02X%01X%01X%01X%01X%03X%03X\n", opcode_d, rd_d, rs_d, rt_d, rm_d, imm1_d, imm2_d);
+    fprintf(output_file, "%02X%01X%01X%01X%01X%03hhX%03hhX\n", opcode_d, rd_d, rs_d, rt_d, rm_d, imm1_d, imm2_d);
 }
 
 
