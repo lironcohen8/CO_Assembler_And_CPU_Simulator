@@ -12,6 +12,7 @@
 #define MAX_MEMORY_SIZE (4096)
 #define OUTPUT_INSTR_FILE_NAME "imemin.txt"
 #define OUTPUT_DATA_FILE_NAME "dmemin.txt"
+#define MAX(X, Y) (((X) > (Y)) ? (X) : (Y))
 
 int max_memory_index = 0;
 int command_counter = 0;
@@ -161,7 +162,7 @@ static int lineHasLabel(char* line){
     int i = 0;
     char c = line[0];
 
-    while (c!=NULL){
+    while (c!='\0'){
         if (c=='#'){
             break;
         }
@@ -186,9 +187,9 @@ static int labelLineHasCommand(char* line){
 
 static void addDataToMemory(char* line){
     int address, value;
-    sscanf(".word %d %d", &address, &value);
+    sscanf(line, ".word %d %d", &address, &value);
     dataMemory[address] = value;
-    max_memory_index = max(max_memory_index,address);
+    max_memory_index = MAX(max_memory_index,address);
 }
 
 static void firstPass(FILE* asm_program){
@@ -198,7 +199,7 @@ static void firstPass(FILE* asm_program){
     labels_arr = (label_t *)calloc(BASE_ARR_SIZE, sizeof(label_t));
 
     while (fgets(line, MAX_LINE_LENGTH, asm_program) != NULL){
-        clearLeadingWhitespaces(*line); 
+        clearLeadingWhitespaces(&line); 
         if ((line[0]=='\n')||(isLineComment(line)==0)){ /*If the line is empty or just a comment*/
             colonIndex=lineHasLabel(line); /*If line starts with label then returns ':' index else -1*/
             if (colonIndex!=-1){
@@ -213,7 +214,7 @@ static void firstPass(FILE* asm_program){
                 labels_arr[label_count++] = tmp_label;
                 line += (colonIndex+1); /*Skip label*/
             }
-            clearLeadingWhitespaces(*line);
+            clearLeadingWhitespaces(&line);
             if (line[0]=='.'){ /*Checks if the line is .word*/
                 addDataToMemory(line);
             }
