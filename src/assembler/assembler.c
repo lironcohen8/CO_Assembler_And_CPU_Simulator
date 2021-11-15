@@ -143,7 +143,9 @@ static void decode_cmds_to_output_file(FILE *output_file, char *line)
     {
         imm2_d = atoi(imm2);
     }
-
+    imm1_d = imm1_d & 0xFFF;
+    imm2_d = imm2_d & 0xFFF;
+    
     fprintf(output_file, "%02X%01X%01X%01X%01X%03hhX%03hhX\n", opcode_d, rd_d, rs_d, rt_d, rm_d, imm1_d, imm2_d);
 }
 
