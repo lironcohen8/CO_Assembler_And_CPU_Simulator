@@ -113,9 +113,8 @@ static int does_line_contain_label(char *line) {
     return 0;
 }
 
-static void decode_mips_to_hex(FILE *output_file, char *line)
+static void decode_cmds_to_output_file(FILE *output_file, char *line)
 {
-    printf("%s", line);
     char opcode[10], rd[10], rs[10], rt[10], rm[10], imm1[32], imm2[32];
     sscanf(line, " %[^ $] $%[^,], $%[^,], $%[^,], $%[^,], %[^,], %s ",  opcode, rd, rs, rt, rm, imm1, imm2);
 
@@ -193,17 +192,20 @@ static void addDataToMemory(char* line){
     max_memory_index = MAX(max_memory_index,address);
 }
 
-static void firstPass(FILE* asm_program){
+static void pass_over_file(int passNum, FILE* asm_program ,FILE* output_file){
     char* line = (char*)malloc(MAX_LINE_LENGTH);
+    char* base_line_ptr = line;
     int colonIndex;
     char* tmp_label_str;
-    labels_arr = (label_t *)calloc(BASE_ARR_SIZE, sizeof(label_t));
+    if (passNum == 1) {
+        labels_arr = (label_t *)calloc(BASE_ARR_SIZE, sizeof(label_t));
+    }
 
     while (fgets(line, MAX_LINE_LENGTH, asm_program) != NULL){
         clearLeadingWhitespaces(&line); 
-        if ((line[0]!='\n')&&(isLineComment(line)==0)){ /*If the line is empty or just a comment*/
-            colonIndex=lineHasLabel(line); /*If line starts with label then returns ':' index else -1*/
-            if (colonIndex!=-1){
+        if ((line[0] != '\n') && (isLineComment(line) == 0)){ /*If the line is empty or just a comment*/
+            colonIndex = lineHasLabel(line); /*If line starts with label then returns ':' index else -1*/
+            if (passNum == 1 && colonIndex!=-1){
                 line[colonIndex] = '\0';
                 tmp_label_str = (char *)malloc(colonIndex + 1);
                 strcpy(tmp_label_str, line);
@@ -213,17 +215,23 @@ static void firstPass(FILE* asm_program){
                     .cmd_index = command_counter}; 
                 
                 labels_arr[label_count++] = tmp_label;
-                line += (colonIndex+1); /*Skip label*/
             }
+            line += (colonIndex + 1); /*Skip label*/
             clearLeadingWhitespaces(&line);
             if (line[0]=='.'){ /*Checks if the line is .word*/
-                addDataToMemory(line);
+                if (passNum == 1) {
+                    addDataToMemory(line);
+                }
             }
             else {
                 if (labelLineHasCommand(line)==1){
                     command_counter++;
+                    if (passNum == 2) {
+                        decode_cmds_to_output_file(output_file, line);
+                    }
                 }
             }
+            line = base_line_ptr;
         }
     }
 }
@@ -231,18 +239,11 @@ static void firstPass(FILE* asm_program){
 
 int main(int argc, char const *argv[]) {
     FILE* asm_program = fopen(argv[1], "r");
-    firstPass(asm_program);
-    printf("hi");
-    /*
-    FILE *output_instr_file = fopen(OUTPUT_INSTR_FILE_NAME, "w");
+    FILE *output_cmd_file = fopen(OUTPUT_INSTR_FILE_NAME, "w");
+
+    pass_over_file(1, asm_program, output_cmd_file);
     rewind(asm_program);
-    while (fgets(buffer, MAX_LINE_LENGTH, asm_program) != NULL)
-    {
-        if (does_line_contain_label(buffer) == 0) {
-            decode_mips_to_hex(output_instr_file, buffer);
-        }
-    }
+    pass_over_file(2, asm_program, output_cmd_file);
     fclose(asm_program);
-    fclose(output_instr_file);
-    */
+    fclose(output_cmd_file);
 }
