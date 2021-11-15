@@ -2,16 +2,22 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 #define BASE_ARR_SIZE (10)
 #define ARR_SIZE_MULTIPLY (2)
 #define OPCODES_NUM (22)
 #define REGS_NUM (16)
+#define MAX_ASSEMBLY_LINES (4096)
+#define MAX_MEMORY_SIZE (4096)
 #define OUTPUT_INSTR_FILE_NAME "imemin.txt"
 #define OUTPUT_DATA_FILE_NAME "dmemin.txt"
 
-label_t *labels_arr;
+int max_memory_index = 0;
+int command_counter = 0;
+label_t* labels_arr;
 static int label_count = 0;
+int dataMemory[MAX_MEMORY_SIZE];
 
 static const char *opcodes_arr[] = {"add",
                                     "sub",
@@ -139,45 +145,93 @@ static void decode_mips_to_hex(FILE *output_file, char *line)
     fprintf(output_file, "%02X%01X%01X%01X%01X%03X%03X\n", opcode_d, rd_d, rs_d, rt_d, rm_d, imm1_d, imm2_d);
 }
 
-int main(int argc, char const *argv[])
-{
-    char const *filename = argv[1];
-    char buffer[MAX_LINE_LENGTH];
-    FILE *asm_program = fopen(filename, "r");
-    int line_counter = -1;
-    int curr_arr_len = BASE_ARR_SIZE;
-    labels_arr = (label_t *)calloc(BASE_ARR_SIZE, sizeof(label_t));
-    char *tmp_label_str;
 
-    while (fgets(buffer, MAX_LINE_LENGTH, asm_program) != NULL)
-    {
-        line_counter++;
-        for (int i = 0; i < MAX_LABEL_LENGTH + 1; i++)
-        {
-            if (buffer[i] == ':')
-            {
-                buffer[i] = '\0';
-                tmp_label_str = (char *)malloc(i + 1);
-                strcpy(tmp_label_str, buffer);
+/*Line functions*/
+static void clearLeadingWhitespaces(char** line){
+    while (isspace((char)**line)){
+        *line++;
+    }
+}
+
+static int isLineComment(char* line){
+    return line[0]=='#';
+}
+
+static int lineHasLabel(char* line){
+    int i = 0;
+    char c = line[0];
+
+    while (c!=NULL){
+        if (c=='#'){
+            break;
+        }
+        if (c==':'){
+            return i;
+        }
+        c = line[++i];
+    }
+
+    return -1;
+}
+
+static int isLineWord(char* line){
+    return line[0]=='.';
+}
+
+static int labelLineHasCommand(char* line){
+    char* firstWord;
+    scanf(line,"%s",&firstWord);
+    return get_opcode_num(firstWord)>-1;
+}
+
+static void addDataToMemory(char* line){
+    int address, value;
+    sscanf(".word %d %d", &address, &value);
+    dataMemory[address] = value;
+    max_memory_index = max(max_memory_index,address);
+}
+
+static void firstPass(FILE* asm_program){
+    char* line = (char*)malloc(MAX_LINE_LENGTH);
+    int colonIndex;
+    char* tmp_label_str;
+    labels_arr = (label_t *)calloc(BASE_ARR_SIZE, sizeof(label_t));
+
+    while (fgets(line, MAX_LINE_LENGTH, asm_program) != NULL){
+        clearLeadingWhitespaces(*line); 
+        if ((line[0]=='\n')||(isLineComment(line)==0)){ /*If the line is empty or just a comment*/
+            colonIndex=lineHasLabel(line); /*If line starts with label then returns ':' index else -1*/
+            if (colonIndex!=-1){
+                line[colonIndex] = '\0';
+                tmp_label_str = (char *)malloc(colonIndex + 1);
+                strcpy(tmp_label_str, line);
 
                 label_t tmp_label = {
                     .label = tmp_label_str,
-                    .cmd_index = line_counter--}; /* label lines don't count as instruction lines */
-
-                if (label_count == curr_arr_len)
-                {
-                    curr_arr_len *= ARR_SIZE_MULTIPLY;
-                    labels_arr = (label_t *)realloc(labels_arr, curr_arr_len * sizeof(label_t));
-                }
+                    .cmd_index = command_counter}; 
+                
                 labels_arr[label_count++] = tmp_label;
-                break;
+                line += (colonIndex+1); /*Skip label*/
+            }
+            clearLeadingWhitespaces(*line);
+            if (line[0]=='.'){ /*Checks if the line is .word*/
+                addDataToMemory(line);
+            }
+            else {
+                if (labelLineHasCommand(line)==1){
+                    command_counter++;
+                }
             }
         }
     }
+}
 
-    labels_arr = (label_t *)realloc(labels_arr, label_count * sizeof(label_t));
-    printf("hi");
 
+int main(int argc, char const *argv[]) {
+    FILE* asm_program = fopen(argv[1], "r");
+    firstPass(asm_program);
+
+    /*
     FILE *output_instr_file = fopen(OUTPUT_INSTR_FILE_NAME, "w");
     rewind(asm_program);
     while (fgets(buffer, MAX_LINE_LENGTH, asm_program) != NULL)
@@ -188,4 +242,5 @@ int main(int argc, char const *argv[])
     }
     fclose(asm_program);
     fclose(output_instr_file);
+    */
 }
