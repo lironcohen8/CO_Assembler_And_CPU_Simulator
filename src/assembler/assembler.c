@@ -5,22 +5,21 @@
 #include <ctype.h>
 #include <inttypes.h>
 
-#define BASE_ARR_SIZE (10)
-#define ARR_SIZE_MULTIPLY (2)
-#define OPCODES_NUM (22)
-#define MAX_OPCODE_LENGTH (5)
-#define REGS_NUM (16)
-#define MAX_ASSEMBLY_LINES (4096)
-#define MAX_MEMORY_SIZE (4096)
-#define OUTPUT_INSTR_FILE_NAME "imemin.txt"
-#define OUTPUT_DATA_FILE_NAME "dmemin.txt"
-#define MAX(X, Y) (((X) > (Y)) ? (X) : (Y))
+#define OPCODES_NUM             (22)
+#define MAX_OPCODE_LENGTH       (5)
+#define MAX_REG_LENGTH          (5)
+#define REGS_NUM                (16)
+#define MAX_ASSEMBLY_LINES      (4096)
+#define MAX_MEMORY_SIZE         (4096)
+#define OUTPUT_INSTR_FILE_NAME  "imemin.txt"
+#define OUTPUT_DATA_FILE_NAME   "dmemin.txt"
+#define MAX(X, Y)               (((X) > (Y)) ? (X) : (Y))
 
 int max_memory_index = 0; /*Holds the max non empty index in the data array*/
 int command_counter = 0;
 static int label_count = 0; 
 int data_memory[MAX_MEMORY_SIZE]; /*The data array - will store all the '.word' commands*/
-label_t* labels_arr; /*This array will hold all the labels and their index in the code*/
+label_t labels_arr[MAX_ASSEMBLY_LINES]; /*This array will hold all the labels and their index in the code*/
 
 /*Dictionaries for the opcode and regs decoding*/
 static const char *opcodes_arr[] = {"add",
@@ -127,7 +126,7 @@ static int is_label(char *imm)
 static void decode_cmds_to_output_file(FILE *output_file, char *line)
 {
     /*This function is used to parse the line*/
-    char opcode[10], rd[10], rs[10], rt[10], rm[10], imm1[32], imm2[32];
+    char opcode[MAX_OPCODE_LENGTH], rd[MAX_REG_LENGTH], rs[MAX_REG_LENGTH], rt[MAX_REG_LENGTH], rm[MAX_REG_LENGTH], imm1[32], imm2[32];
     sscanf(line, " %[^ $] $%[^,], $%[^,], $%[^,], $%[^,], %[^,], %s ",  opcode, rd, rs, rt, rm, imm1, imm2);
 
     int opcode_d, rd_d, rs_d, rt_d, rm_d, imm1_d, imm2_d;
@@ -161,7 +160,7 @@ static void decode_cmds_to_output_file(FILE *output_file, char *line)
     imm2_d = imm2_d & 0xFFF;
 
     /*Write the command decoding to the output file*/
-    fprintf(output_file, "%02X%01X%01X%01X%01X%03hhX%03hhX\n", opcode_d, rd_d, rs_d, rt_d, rm_d, imm1_d, imm2_d);
+    fprintf(output_file, "%02X%01X%01X%01X%01X%03X%03X\n", opcode_d, rd_d, rs_d, rt_d, rm_d, imm1_d, imm2_d);
 }
 
 static void add_data_to_memory(char* line){
@@ -224,12 +223,8 @@ static int line_has_command(char* line){
 static void pass_over_file(int pass_num, FILE* asm_program ,FILE* output_file){
     char* line = (char*)malloc(MAX_LINE_LENGTH);
     char* base_line_ptr = line;
-    char* tmp_label_str;
+    char* tmp_label_str = NULL;
     int colon_index;
-    
-    if (pass_num == 1) { /*We only calloc on the first pass*/
-        labels_arr = (label_t *)calloc(BASE_ARR_SIZE, sizeof(label_t));
-    }
 
     while (fgets(line, MAX_LINE_LENGTH, asm_program) != NULL){
         clear_leading_white_spaces(&line); 
