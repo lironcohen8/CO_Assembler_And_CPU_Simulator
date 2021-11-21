@@ -14,5 +14,6 @@ typedef enum {
     $S2,
     $GP,
     $SP,
-    $RA
+    $RA,
+    REGS_NUM
 } reg_e;
