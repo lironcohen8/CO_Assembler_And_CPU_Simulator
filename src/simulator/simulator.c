@@ -71,19 +71,19 @@ static int sign_extension(int imm) {
 }
 
 /* At each instruction if one of the registers holds is an immediate, set it's value */
-static void set_reg_immediate(reg_e reg) {
+static void set_reg_immediate(reg_e reg, asm_cmd_t* cmd) {
      if (reg == $IMM1) {
-        g_regs[$IMM1] = sign_extension(reg);
+        g_regs[$IMM1] = sign_extension(cmd->imm1);
     } else if (reg == $IMM2) {
-        g_regs[$IMM2] = sign_extension(reg);
+        g_regs[$IMM2] = sign_extension(cmd->imm2);
     }
 }
 
 static void update_immediates(asm_cmd_t* cmd) {
-    set_reg_immediate(cmd->rd);
-    set_reg_immediate(cmd->rs);
-    set_reg_immediate(cmd->rt);
-    set_reg_immediate(cmd->rm);
+    set_reg_immediate(cmd->rd, cmd);
+    set_reg_immediate(cmd->rs, cmd);
+    set_reg_immediate(cmd->rt, cmd);
+    set_reg_immediate(cmd->rm, cmd);
 }
 
 static int is_jump_or_branch(opcode_e opcode) {
