@@ -1,3 +1,5 @@
+#define REGS_NUM    (16)
+
 typedef enum {
     $ZERO,
     $IMM1,
@@ -14,6 +16,5 @@ typedef enum {
     $S2,
     $GP,
     $SP,
-    $RA,
-    REGS_NUM
+    $RA
 } reg_e;

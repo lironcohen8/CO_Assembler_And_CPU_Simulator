@@ -33,6 +33,6 @@ typedef struct {
     reg_e rs       :  4;
     reg_e rt       :  4;
     reg_e rm       :  4;
-    uint16_t imm1  : 12;
-    uint16_t imm2  : 12;
+    int imm1       : 12;
+    int imm2       : 12;
 } asm_cmd_t;
