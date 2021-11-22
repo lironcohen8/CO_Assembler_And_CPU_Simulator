@@ -173,6 +173,13 @@ static void add_data_to_memory(char* line){
     max_memory_index = MAX(max_memory_index,address); /*Updates the max non empty index at the data_memory array*/
 }
 
+static void write_memory_file(FILE* output_data_file){
+    /*Writes the memory data file*/
+    for (int i=0; i<=max_memory_index; i++){
+        fprintf(output_data_file,"%08X\n",data_memory[i]);
+    }
+}
+
 /*Line functions*/
 static void clear_leading_white_spaces(char** line) {
     /*Trims leading spaces in a line by advancing the pointer to the line until the first 
@@ -266,11 +273,14 @@ static void pass_over_file(int pass_num, FILE* asm_program ,FILE* output_file){
 
 int main(int argc, char const *argv[]) {
     FILE* asm_program = fopen(argv[1], "r");
-    FILE *output_cmd_file = fopen(OUTPUT_INSTR_FILE_NAME, "w");
+    FILE* output_cmd_file = fopen(OUTPUT_INSTR_FILE_NAME, "w");
+    FILE* output_data_file = fopen(OUTPUT_DATA_FILE_NAME, "w");
 
     pass_over_file(1, asm_program, output_cmd_file);
     rewind(asm_program);
     pass_over_file(2, asm_program, output_cmd_file);
+    write_memory_file(output_data_file);
     fclose(asm_program);
     fclose(output_cmd_file);
+    fclose(output_data_file);
 }
