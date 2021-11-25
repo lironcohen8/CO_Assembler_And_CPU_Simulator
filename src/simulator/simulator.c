@@ -60,6 +60,27 @@ static void or_cmd(reg_e rd, reg_e rs, reg_e rt, reg_e rm) {
     g_regs[rd] = g_regs[rs] | g_regs[rt] | g_regs[rm];
 }
 
+static void xor_cmd(reg_e rd, reg_e rs, reg_e rt, reg_e rm) {
+    if (rd == $IMM1 || rd == $IMM2 || rd == $ZERO) {
+        return;
+    }
+    g_regs[rd] = g_regs[rs] ^ g_regs[rt] ^ g_regs[rm];
+}
+
+static void sll_cmd(reg_e rd, reg_e rs, reg_e rt, reg_e rm) {
+    if (rd == $IMM1 || rd == $IMM2 || rd == $ZERO) {
+        return;
+    }
+    g_regs[rd] = g_regs[rs] << g_regs[rt];
+}
+
+static void sra_cmd(reg_e rd, reg_e rs, reg_e rt, reg_e rm) {
+    if (rd == $IMM1 || rd == $IMM2 || rd == $ZERO) {
+        return;
+    }
+    g_regs[rd] = g_regs[rs] >> g_regs[rt];
+}
+
 static int sign_extension(int imm) {
     /* Any immediate is stored in 12 bits in SIMP instruction 
     This function assumes num is the shepe of 0x00000###
