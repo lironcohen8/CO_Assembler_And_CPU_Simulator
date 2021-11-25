@@ -3,85 +3,232 @@
 #include <stdint.h>
 #include "simulator.h"
 
-// CPU registers (32 bits each)
-static int g_regs[REGS_NUM];
-// Global program counter
+/* CPU registers (32 bits each) */
+static int g_cpu_regs[CPU_REGS_NUM];
+/* IO registers */
+static int g_io_regs[IO_REGS_NUM];
+/* Data memory */
+static int g_dmem[DATA_MEMORY_SIZE];
+/* Global program counter */
 static int g_pc;
 
-static void add_cmd(reg_e, reg_e, reg_e, reg_e);
-static void sub_cmd(reg_e, reg_e, reg_e, reg_e);
-static void mac_cmd(reg_e, reg_e, reg_e, reg_e);
-static void and_cmd(reg_e, reg_e, reg_e, reg_e);
-static void or_cmd(reg_e, reg_e, reg_e, reg_e);
+static void add_cmd(cpu_reg_e, cpu_reg_e, cpu_reg_e, cpu_reg_e);
+static void sub_cmd(cpu_reg_e, cpu_reg_e, cpu_reg_e, cpu_reg_e);
+static void mac_cmd(cpu_reg_e, cpu_reg_e, cpu_reg_e, cpu_reg_e);
+static void and_cmd(cpu_reg_e, cpu_reg_e, cpu_reg_e, cpu_reg_e);
+static void or_cmd(cpu_reg_e, cpu_reg_e, cpu_reg_e, cpu_reg_e);
+static void xor_cmd(cpu_reg_e, cpu_reg_e, cpu_reg_e, cpu_reg_e);
+static void sll_cmd(cpu_reg_e, cpu_reg_e, cpu_reg_e, cpu_reg_e);
+static void sra_cmd(cpu_reg_e, cpu_reg_e, cpu_reg_e, cpu_reg_e);
+static void srl_cmd(cpu_reg_e, cpu_reg_e, cpu_reg_e, cpu_reg_e);
+static void beq_cmd(cpu_reg_e, cpu_reg_e, cpu_reg_e, cpu_reg_e);
+static void bne_cmd(cpu_reg_e, cpu_reg_e, cpu_reg_e, cpu_reg_e);
+static void blt_cmd(cpu_reg_e, cpu_reg_e, cpu_reg_e, cpu_reg_e);
+static void bgt_cmd(cpu_reg_e, cpu_reg_e, cpu_reg_e, cpu_reg_e);
+static void ble_cmd(cpu_reg_e, cpu_reg_e, cpu_reg_e, cpu_reg_e);
+static void bge_cmd(cpu_reg_e, cpu_reg_e, cpu_reg_e, cpu_reg_e);
+static void jal_cmd(cpu_reg_e, cpu_reg_e, cpu_reg_e, cpu_reg_e);
+static void lw_cmd(cpu_reg_e, cpu_reg_e, cpu_reg_e, cpu_reg_e);
+static void sw_cmd(cpu_reg_e, cpu_reg_e, cpu_reg_e, cpu_reg_e);
+static void reti_cmd(cpu_reg_e, cpu_reg_e, cpu_reg_e, cpu_reg_e);
+static void in_cmd(cpu_reg_e, cpu_reg_e, cpu_reg_e, cpu_reg_e);
+static void out_cmd(cpu_reg_e, cpu_reg_e, cpu_reg_e, cpu_reg_e);
+static void halt_cmd(cpu_reg_e, cpu_reg_e, cpu_reg_e, cpu_reg_e);
+
 
 /* Array of function pointers used to call the right operation 
 cmds_ptr_arr[opcode] is a function pointer to a function performing the 
 opcode */
-static void (*cmds_ptr_arr[])(reg_e, reg_e, reg_e, reg_e) = {
+static void (*cmds_ptr_arr[])(cpu_reg_e, cpu_reg_e, cpu_reg_e, cpu_reg_e) = {
     add_cmd,
     sub_cmd,
     mac_cmd,
     and_cmd,
-    or_cmd};
+    or_cmd,
+    xor_cmd,
+    sll_cmd,
+    sra_cmd,
+    srl_cmd,
+    beq_cmd,
+    bne_cmd,
+    blt_cmd,
+    bgt_cmd,
+    ble_cmd,
+    bge_cmd,
+    jal_cmd,
+    lw_cmd,
+    sw_cmd,
+    reti_cmd,
+    in_cmd,
+    out_cmd,
+    halt_cmd
+    };
 
 /* Command function each function corresponds to an opcode*/
-static void add_cmd(reg_e rd, reg_e rs, reg_e rt, reg_e rm) {
+static void add_cmd(cpu_reg_e rd, cpu_reg_e rs, cpu_reg_e rt, cpu_reg_e rm) {
     if (rd == $IMM1 || rd == $IMM2 || rd == $ZERO) {
         return;
     }
-    g_regs[rd] = g_regs[rs] + g_regs[rt] + g_regs[rm];
+    g_cpu_regs[rd] = g_cpu_regs[rs] + g_cpu_regs[rt] + g_cpu_regs[rm];
 }
 
-static void sub_cmd(reg_e rd, reg_e rs, reg_e rt, reg_e rm) {
+static void sub_cmd(cpu_reg_e rd, cpu_reg_e rs, cpu_reg_e rt, cpu_reg_e rm) {
     if (rd == $IMM1 || rd == $IMM2 || rd == $ZERO) {
         return;
     }
-    g_regs[rd] = g_regs[rs] - g_regs[rt] - g_regs[rm];
+    g_cpu_regs[rd] = g_cpu_regs[rs] - g_cpu_regs[rt] - g_cpu_regs[rm];
 }
 
-static void mac_cmd(reg_e rd, reg_e rs, reg_e rt, reg_e rm) {
+static void mac_cmd(cpu_reg_e rd, cpu_reg_e rs, cpu_reg_e rt, cpu_reg_e rm) {
     if (rd == $IMM1 || rd == $IMM2 || rd == $ZERO) {
         return;
     }
-    g_regs[rd] = g_regs[rs] * g_regs[rt] + g_regs[rm];
+    g_cpu_regs[rd] = g_cpu_regs[rs] * g_cpu_regs[rt] + g_cpu_regs[rm];
 }
 
-static void and_cmd(reg_e rd, reg_e rs, reg_e rt, reg_e rm) {
+static void and_cmd(cpu_reg_e rd, cpu_reg_e rs, cpu_reg_e rt, cpu_reg_e rm) {
     if (rd == $IMM1 || rd == $IMM2 || rd == $ZERO) {
         return;
     }
-    g_regs[rd] = g_regs[rs] & g_regs[rt] & g_regs[rm];
+    g_cpu_regs[rd] = g_cpu_regs[rs] & g_cpu_regs[rt] & g_cpu_regs[rm];
 }
 
-static void or_cmd(reg_e rd, reg_e rs, reg_e rt, reg_e rm) {
+static void or_cmd(cpu_reg_e rd, cpu_reg_e rs, cpu_reg_e rt, cpu_reg_e rm) {
     if (rd == $IMM1 || rd == $IMM2 || rd == $ZERO) {
         return;
     }
-    g_regs[rd] = g_regs[rs] | g_regs[rt] | g_regs[rm];
+    g_cpu_regs[rd] = g_cpu_regs[rs] | g_cpu_regs[rt] | g_cpu_regs[rm];
 }
 
-static void xor_cmd(reg_e rd, reg_e rs, reg_e rt, reg_e rm) {
+static void xor_cmd(cpu_reg_e rd, cpu_reg_e rs, cpu_reg_e rt, cpu_reg_e rm) {
     if (rd == $IMM1 || rd == $IMM2 || rd == $ZERO) {
         return;
     }
-    g_regs[rd] = g_regs[rs] ^ g_regs[rt] ^ g_regs[rm];
+    g_cpu_regs[rd] = g_cpu_regs[rs] ^ g_cpu_regs[rt] ^ g_cpu_regs[rm];
 }
 
-static void sll_cmd(reg_e rd, reg_e rs, reg_e rt, reg_e rm) {
+static void sll_cmd(cpu_reg_e rd, cpu_reg_e rs, cpu_reg_e rt, cpu_reg_e rm) {
     if (rd == $IMM1 || rd == $IMM2 || rd == $ZERO) {
         return;
     }
-    g_regs[rd] = g_regs[rs] << g_regs[rt];
+    g_cpu_regs[rd] = g_cpu_regs[rs] << g_cpu_regs[rt];
 }
 
-static void sra_cmd(reg_e rd, reg_e rs, reg_e rt, reg_e rm) {
+static void sra_cmd(cpu_reg_e rd, cpu_reg_e rs, cpu_reg_e rt, cpu_reg_e rm) {
     if (rd == $IMM1 || rd == $IMM2 || rd == $ZERO) {
         return;
     }
-    g_regs[rd] = g_regs[rs] >> g_regs[rt];
+    /* Arithmetic shift with sign extension is done sutomaticly by C */
+    g_cpu_regs[rd] = g_cpu_regs[rs] >> g_cpu_regs[rt];
 }
 
-static int sign_extension(int imm) {
+static void srl_cmd(cpu_reg_e rd, cpu_reg_e rs, cpu_reg_e rt, cpu_reg_e rm) {
+    if (rd == $IMM1 || rd == $IMM2 || rd == $ZERO) {
+        return;
+    }
+    /* Casting as unsigned should perform logical shift
+    (adding zeros in MSB's) */
+    g_cpu_regs[rd] = (unsigned) g_cpu_regs[rs] >> g_cpu_regs[rt];
+}
+
+static void beq_cmd(cpu_reg_e rd, cpu_reg_e rs, cpu_reg_e rt, cpu_reg_e rm) {
+    if (g_cpu_regs[rs] == g_cpu_regs[rt]) {
+        /* Branch if equal - set global pc to 12 LSB's of rm */
+        g_pc = g_cpu_regs[rm] & 0x00000FFF;
+    } else {
+        /* Not equal - continue */
+        g_pc++;
+    }
+}
+
+static void bne_cmd(cpu_reg_e rd, cpu_reg_e rs, cpu_reg_e rt, cpu_reg_e rm) {
+    if (g_cpu_regs[rs] != g_cpu_regs[rt]) {
+        /* Branch if not equal - set global pc to 12 LSB's of rm */
+        g_pc = g_cpu_regs[rm] & 0x00000FFF;
+    } else {
+        /* Not equal - continue */
+        g_pc++;
+    }
+}
+
+static void blt_cmd(cpu_reg_e rd, cpu_reg_e rs, cpu_reg_e rt, cpu_reg_e rm) {
+    if (g_cpu_regs[rs] < g_cpu_regs[rt]) {
+        /* Branch if less than- set global pc to 12 LSB's of rm */
+        g_pc = g_cpu_regs[rm] & 0x00000FFF;
+    } else {
+        /* Not equal - continue */
+        g_pc++;
+    }
+}
+
+static void bgt_cmd(cpu_reg_e rd, cpu_reg_e rs, cpu_reg_e rt, cpu_reg_e rm) {
+    if (g_cpu_regs[rs] > g_cpu_regs[rt]) {
+        /* Branch if greater than- set global pc to 12 LSB's of rm */
+        g_pc = g_cpu_regs[rm] & 0x00000FFF;
+    } else {
+        /* Not equal - continue */
+        g_pc++;
+    }
+}
+
+static void ble_cmd(cpu_reg_e rd, cpu_reg_e rs, cpu_reg_e rt, cpu_reg_e rm) {
+    if (g_cpu_regs[rs] <= g_cpu_regs[rt]) {
+        /* Branch if less or equal than- set global pc to 12 LSB's of rm */
+        g_pc = g_cpu_regs[rm] & 0x00000FFF;
+    } else {
+        /* Not equal - continue */
+        g_pc++;
+    }
+}
+
+static void bge_cmd(cpu_reg_e rd, cpu_reg_e rs, cpu_reg_e rt, cpu_reg_e rm) {
+    if (g_cpu_regs[rs] >= g_cpu_regs[rt]) {
+        /* Branch if greater or equal than- set global pc to 12 LSB's of rm */
+        g_pc = g_cpu_regs[rm] & 0x00000FFF;
+    } else {
+        /* Not equal - continue */
+        g_pc++;
+    }
+}
+
+static void jal_cmd(cpu_reg_e rd, cpu_reg_e rs, cpu_reg_e rt, cpu_reg_e rm) {
+    /* Save next instruction address */
+    g_cpu_regs[rd] = g_pc + 1;
+    /* Jump */
+    g_pc = g_cpu_regs[rm] & 0x00000FFF;
+}
+
+static void lw_cmd(cpu_reg_e rd, cpu_reg_e rs, cpu_reg_e rt, cpu_reg_e rm) {
+    if (rd == $IMM1 || rd == $IMM2 || rd == $ZERO) {
+        return;
+    }
+    g_cpu_regs[rd] = g_dmem[g_cpu_regs[rs] + g_cpu_regs[rt]] + g_cpu_regs[rm];
+}
+
+static void sw_cmd(cpu_reg_e rd, cpu_reg_e rs, cpu_reg_e rt, cpu_reg_e rm) {
+    g_dmem[g_cpu_regs[rs] + g_cpu_regs[rt]] = g_cpu_regs[rm] + g_cpu_regs[rd];
+}
+
+static void reti_cmd(cpu_reg_e rd, cpu_reg_e rs, cpu_reg_e rt, cpu_reg_e rm) {
+    g_pc = g_io_regs[irqreturn];
+}
+
+static void in_cmd(cpu_reg_e rd, cpu_reg_e rs, cpu_reg_e rt, cpu_reg_e rm) {
+    if (rd == $IMM1 || rd == $IMM2 || rd == $ZERO) {
+        return;
+    }
+    g_cpu_regs[rd] = g_io_regs[g_cpu_regs[rs] + g_cpu_regs[rt]];
+}
+
+static void out_cmd(cpu_reg_e rd, cpu_reg_e rs, cpu_reg_e rt, cpu_reg_e rm) {
+    g_io_regs[g_cpu_regs[rs] + g_cpu_regs[rt]] = g_cpu_regs[rm];
+}
+
+static void halt_cmd(cpu_reg_e rd, cpu_reg_e rs, cpu_reg_e rt, cpu_reg_e rm) {
+    exit(EXIT_SUCCESS);
+}
+
+static int sign_extension_imm(int imm) {
     /* Any immediate is stored in 12 bits in SIMP instruction 
     This function assumes num is the shepe of 0x00000###
     Check if the 12th bit is on and extend accordingly */
@@ -92,11 +239,11 @@ static int sign_extension(int imm) {
 }
 
 /* At each instruction if one of the registers holds is an immediate, set it's value */
-static void set_reg_immediate(reg_e reg, asm_cmd_t* cmd) {
+static void set_reg_immediate(cpu_reg_e reg, asm_cmd_t* cmd) {
      if (reg == $IMM1) {
-        g_regs[$IMM1] = sign_extension(cmd->imm1);
+        g_cpu_regs[$IMM1] = sign_extension_imm(cmd->imm1);
     } else if (reg == $IMM2) {
-        g_regs[$IMM2] = sign_extension(cmd->imm2);
+        g_cpu_regs[$IMM2] = sign_extension_imm(cmd->imm2);
     }
 }
 
@@ -127,6 +274,9 @@ static void exec_cmd(asm_cmd_t* cmd) {
 
 int main(int argc, char const *argv[])
 {
-    /* code */
+    int x = -3;
+    int y = x>>1;
+    int z = (unsigned) x>>1;
+    printf("%d %d \n", y, z);
     return 0;
 }

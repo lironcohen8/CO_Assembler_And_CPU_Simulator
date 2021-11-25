@@ -8,9 +8,9 @@
 #define OPCODES_NUM             (22)
 #define MAX_OPCODE_LENGTH       (5)
 #define MAX_REG_LENGTH          (5)
-#define REGS_NUM                (16)
+#define CPU_REGS_NUM                (16)
 #define MAX_ASSEMBLY_LINES      (4096)
-#define MAX_MEMORY_SIZE         (4096)
+#define DATA_MEMORY_SIZE        (4096)
 #define OUTPUT_INSTR_FILE_NAME  "imemin.txt"
 #define OUTPUT_DATA_FILE_NAME   "dmemin.txt"
 #define MAX(X, Y)               (((X) > (Y)) ? (X) : (Y))
@@ -18,7 +18,7 @@
 int max_memory_index = 0; /*Holds the max non empty index in the data array*/
 int command_counter = 0;
 static int label_count = 0; 
-int data_memory[MAX_MEMORY_SIZE]; /*The data array - will store all the '.word' commands*/
+int data_memory[DATA_MEMORY_SIZE]; /*The data array - will store all the '.word' commands*/
 label_t labels_arr[MAX_ASSEMBLY_LINES]; /*This array will hold all the labels and their index in the code*/
 
 /*Dictionaries for the opcode and regs decoding*/

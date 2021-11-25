@@ -1,4 +1,5 @@
-#define REGS_NUM    (16)
+#define CPU_REGS_NUM    (16)
+#define IO_REGS_NUM     (23)
 
 typedef enum {
     $ZERO,
@@ -17,4 +18,30 @@ typedef enum {
     $GP,
     $SP,
     $RA
-} reg_e;
+} cpu_reg_e;
+
+typedef enum {
+    irq0enable,
+    irq1enable,
+    irq2enable,
+    irq0status,
+    irq1status,
+    irq2status,
+    irqhandler,
+    irqreturn,
+    clks,
+    leds,
+    display7seg,
+    timerenable,
+    timercurrent,
+    timermax,
+    diskcmd,
+    disksector,
+    diskbuffer,
+    diskstatus,
+    reserved1,
+    reserved2,
+    monitoraddr,
+    monitordata,
+    monitorcmd
+} io_reg_e;
