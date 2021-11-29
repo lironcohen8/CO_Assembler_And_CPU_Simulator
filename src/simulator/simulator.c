@@ -11,6 +11,8 @@ static int g_io_regs[IO_REGS_NUM];
 static int g_dmem[DATA_MEMORY_SIZE];
 /* Global program counter */
 static int g_pc;
+/* Global flag indicating program is running */
+static int g_is_running;
 
 static void add_cmd(cpu_reg_e, cpu_reg_e, cpu_reg_e, cpu_reg_e);
 static void sub_cmd(cpu_reg_e, cpu_reg_e, cpu_reg_e, cpu_reg_e);
@@ -225,7 +227,7 @@ static void out_cmd(cpu_reg_e rd, cpu_reg_e rs, cpu_reg_e rt, cpu_reg_e rm) {
 }
 
 static void halt_cmd(cpu_reg_e rd, cpu_reg_e rs, cpu_reg_e rt, cpu_reg_e rm) {
-    exit(EXIT_SUCCESS);
+    g_is_running = False;
 }
 
 static int sign_extension_imm(int imm) {
@@ -258,6 +260,21 @@ static int is_jump_or_branch(opcode_e opcode) {
     return (opcode >= BEQ && opcode <= JAL) || (opcode == RETI);
 }
 
+static void parse_line_to_cmd(char* line, asm_cmd_t* cmd) {
+    /* Each command is 48 bits so 64 bits are required */
+    unsigned long long raw;
+    sscanf(line, "%llX", &raw);
+
+    /* construct the command object */
+    cmd->imm2 = raw & 0xFFF;
+    cmd->imm1 = (raw >> 12) & 0xFFF;
+    cmd->rm = (raw >> 24) & 0xF;
+    cmd->rt = (raw >> 28) & 0xF;
+    cmd->rs = (raw >> 32) & 0xF;
+    cmd->rd = (raw >> 36) & 0xF;
+    cmd->opcode = (raw >> 40) & 0xFF;
+}
+
 /* Execute a command using the functions pointers array */
 static void exec_cmd(asm_cmd_t* cmd) {
     /* Check for immediates and update accordingly */
@@ -270,11 +287,27 @@ static void exec_cmd(asm_cmd_t* cmd) {
     }
 }
 
+void build_instructions_arr(FILE* instr_file, asm_cmd_t** asm_arr) {
+   char line_buffer[INSTRUCTION_LINE_LEN];
+   int instructions_count = 0;
+   while (fgets(line_buffer, INSTRUCTION_LINE_LEN, instr_file) != NULL) {
+       
+   }
+       
+}
 
 
 int main(int argc, char const *argv[])
 {
-    int x = -3;
+    FILE* input_cmd_file = fopen(INPUT_INSTR_FILE_NAME, "w");
+
+
+    int x;
+    asm_cmd_t cmd;
+    parse_line_to_cmd("00EE20000FFD", &cmd);
+    exec_cmd(&cmd);
+    sscanf("A0\n", "%X", &x);
+    // int x = -3;
     int y = x>>1;
     int z = (unsigned) x>>1;
     printf("%d %d \n", y, z);
