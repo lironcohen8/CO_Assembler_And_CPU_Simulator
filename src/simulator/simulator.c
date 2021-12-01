@@ -10,7 +10,7 @@ static int g_io_regs[IO_REGS_NUM];
 /* Data memory */
 static int g_dmem[DATA_MEMORY_SIZE];
 /* Global program counter */
-static int g_pc;
+static int g_pc = 0;
 /* Global flag indicating program is running */
 static int g_is_running;
 
@@ -250,10 +250,12 @@ static void set_reg_immediate(cpu_reg_e reg, asm_cmd_t* cmd) {
 }
 
 static void update_immediates(asm_cmd_t* cmd) {
-    set_reg_immediate(cmd->rd, cmd);
-    set_reg_immediate(cmd->rs, cmd);
-    set_reg_immediate(cmd->rt, cmd);
-    set_reg_immediate(cmd->rm, cmd);
+    g_cpu_regs[$IMM1] = sign_extension_imm(cmd->imm1);
+    g_cpu_regs[$IMM2] = sign_extension_imm(cmd->imm2);
+    // set_reg_immediate(cmd->rd, cmd);
+    // set_reg_immediate(cmd->rs, cmd);
+    // set_reg_immediate(cmd->rt, cmd);
+    // set_reg_immediate(cmd->rm, cmd);
 }
 
 static int is_jump_or_branch(opcode_e opcode) {
@@ -281,26 +283,41 @@ static void exec_cmd(asm_cmd_t* cmd) {
     update_immediates(cmd);
     /* Execute the command */
     cmds_ptr_arr[cmd->opcode](cmd->rd, cmd->rs, cmd->rt, cmd->rm);
-    /* If the command is not branch or jump than advance PC */
-    if (!is_jump_or_branch(cmd->opcode)) {
-        g_pc++;
-    }
 }
 
-void build_instructions_arr(FILE* instr_file, asm_cmd_t** asm_arr) {
-   char line_buffer[INSTRUCTION_LINE_LEN];
+void build_instructions_arr(FILE* instr_file, asm_cmd_t** cmd_arr) {
+   char line_buffer[INSTRUCTION_LINE_LEN + 2];
    int instructions_count = 0;
-   while (fgets(line_buffer, INSTRUCTION_LINE_LEN, instr_file) != NULL) {
-       
+   asm_cmd_t curr_cmd;
+   /* stops when either (n-1) characters are read, or /n is read
+   We want to read the /n char so it won't get in to the next line */
+   while (fgets(line_buffer, INSTRUCTION_LINE_LEN + 2, instr_file) != NULL) {
+       parse_line_to_cmd(line_buffer, &curr_cmd);
+       (*cmd_arr)[instructions_count++] = curr_cmd;
    }
-       
+   (*cmd_arr) = (asm_cmd_t*)realloc(*cmd_arr, instructions_count * sizeof(asm_cmd_t));
+}
+
+void exec_instructions(asm_cmd_t* instructions_arr) {
+    g_is_running = True;
+    asm_cmd_t* curr_cmd;
+    while (g_is_running) {
+        curr_cmd = &instructions_arr[g_pc]; 
+        exec_cmd(curr_cmd);
+        /* If the command is not branch or jump than advance PC */
+        if (!is_jump_or_branch(curr_cmd->opcode)) {
+            g_pc++;
+        }
+    }
 }
 
 
 int main(int argc, char const *argv[])
 {
-    FILE* input_cmd_file = fopen(INPUT_INSTR_FILE_NAME, "w");
-
+    FILE* input_cmd_file = fopen(argv[1], "r");
+    asm_cmd_t* instr_arr = (asm_cmd_t*)malloc(MAX_ASSEMBLY_LINES * sizeof(asm_cmd_t));
+    build_instructions_arr(input_cmd_file, &instr_arr);
+    exec_instructions(instr_arr);
 
     int x;
     asm_cmd_t cmd;

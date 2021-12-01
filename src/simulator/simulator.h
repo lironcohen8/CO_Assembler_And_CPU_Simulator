@@ -2,6 +2,7 @@
 #include "../reg.h"
 
 #define DATA_MEMORY_SIZE            (4096)
+#define MAX_ASSEMBLY_LINES          (4096)
 #define INSTRUCTION_LINE_LEN        (12)
 #define INPUT_INSTR_FILE_NAME       "imemin.txt"
 #define INPUT_DATA_FILE_NAME        "dmemin.txt"
