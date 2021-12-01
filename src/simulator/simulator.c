@@ -240,22 +240,9 @@ static int sign_extension_imm(int imm) {
     return imm;
 }
 
-/* At each instruction if one of the registers holds is an immediate, set it's value */
-static void set_reg_immediate(cpu_reg_e reg, asm_cmd_t* cmd) {
-     if (reg == $IMM1) {
-        g_cpu_regs[$IMM1] = sign_extension_imm(cmd->imm1);
-    } else if (reg == $IMM2) {
-        g_cpu_regs[$IMM2] = sign_extension_imm(cmd->imm2);
-    }
-}
-
 static void update_immediates(asm_cmd_t* cmd) {
     g_cpu_regs[$IMM1] = sign_extension_imm(cmd->imm1);
     g_cpu_regs[$IMM2] = sign_extension_imm(cmd->imm2);
-    // set_reg_immediate(cmd->rd, cmd);
-    // set_reg_immediate(cmd->rs, cmd);
-    // set_reg_immediate(cmd->rt, cmd);
-    // set_reg_immediate(cmd->rm, cmd);
 }
 
 static int is_jump_or_branch(opcode_e opcode) {
@@ -279,13 +266,13 @@ static void parse_line_to_cmd(char* line, asm_cmd_t* cmd) {
 
 /* Execute a command using the functions pointers array */
 static void exec_cmd(asm_cmd_t* cmd) {
-    /* Check for immediates and update accordingly */
+    /* $imm1 and $imm2 should hold immediets value */
     update_immediates(cmd);
     /* Execute the command */
     cmds_ptr_arr[cmd->opcode](cmd->rd, cmd->rs, cmd->rt, cmd->rm);
 }
 
-void build_instructions_arr(FILE* instr_file, asm_cmd_t** cmd_arr) {
+static void load_instructions(FILE* instr_file, asm_cmd_t** cmd_arr) {
    char line_buffer[INSTRUCTION_LINE_LEN + 2];
    int instructions_count = 0;
    asm_cmd_t curr_cmd;
@@ -298,11 +285,23 @@ void build_instructions_arr(FILE* instr_file, asm_cmd_t** cmd_arr) {
    (*cmd_arr) = (asm_cmd_t*)realloc(*cmd_arr, instructions_count * sizeof(asm_cmd_t));
 }
 
-void exec_instructions(asm_cmd_t* instructions_arr) {
+static void load_data_memory(FILE* data_input_file) {
+    char line_buffer[DATA_LINE_LEN + 2];
+    int line_count = 0;
+    /* stops when either (n-1) characters are read, or /n is read
+    We want to read the /n char so it won't get in to the next line */
+    while (fgets(line_buffer, DATA_LINE_LEN + 2, data_input_file) != NULL) {
+        sscanf(line_buffer, "%X", &g_dmem[line_count++]);
+    }
+}
+
+static void exec_instructions(asm_cmd_t* instructions_arr) {
     g_is_running = True;
     asm_cmd_t* curr_cmd;
     while (g_is_running) {
+        /* Fetch current command to execute */
         curr_cmd = &instructions_arr[g_pc]; 
+        /* Execute */
         exec_cmd(curr_cmd);
         /* If the command is not branch or jump than advance PC */
         if (!is_jump_or_branch(curr_cmd->opcode)) {
@@ -314,19 +313,27 @@ void exec_instructions(asm_cmd_t* instructions_arr) {
 
 int main(int argc, char const *argv[])
 {
+    /* FOR DEBUGGING in launch.json
+    "args": [
+        "C:\\Users\\User1\\OneDrive\\Desktop\\CompStructProj\\ComputerOrganizationProject\\src\\assembler\\imemin.txt",
+        "C:\\Users\\User1\\OneDrive\\Desktop\\CompStructProj\\ComputerOrganizationProject\\src\\assembler\\dmemin.txt"],
+    */
+
+    /* imemin.txt */
     FILE* input_cmd_file = fopen(argv[1], "r");
+    /* dmemin.txt */
+    FILE* input_data_file = fopen(argv[2], "r");
     asm_cmd_t* instr_arr = (asm_cmd_t*)malloc(MAX_ASSEMBLY_LINES * sizeof(asm_cmd_t));
-    build_instructions_arr(input_cmd_file, &instr_arr);
+    /* Load instructions file and store them in instr_arr */
+    load_instructions(input_cmd_file, &instr_arr);
+    /* Load data memory and store in g_dmem */
+    load_data_memory(input_data_file);
+    /* Execure program */
     exec_instructions(instr_arr);
 
-    int x;
-    asm_cmd_t cmd;
-    parse_line_to_cmd("00EE20000FFD", &cmd);
-    exec_cmd(&cmd);
-    sscanf("A0\n", "%X", &x);
-    // int x = -3;
-    int y = x>>1;
-    int z = (unsigned) x>>1;
-    printf("%d %d \n", y, z);
+
+    /* Update dmemout with the updatede memory */
+    // TODO : put g_dmem to dmemout.txt 
+    free(instr_arr);
     return 0;
 }
