@@ -32,45 +32,46 @@
 .word 0x11F 1
 
 Main:	
-	add $s0, $0, $0, $imm1, 0x100, 0	#t0 set for the address of first value in mat A
-	add $s1, $0, $0, $imm1, 0x110, 0	#t1 set for the address of first value in mat B 
-	add $s2, $0, $0, $imm1, 0x120, 0	#t1 set for the address of first value in mat C 
-	add $t0, $0, $0, $0, 0, 0		#Row counter
-	add $t1, $0, $0, $0, 0, 0		#Column counter
-	beq $0, $0, $0, LOOP, 0, 0	
+	add $s0, $zero, $zero, $imm1, 0x100, 0	#t0 set for the address of first value in mat A
+	add $s1, $zero, $zero, $imm1, 0x110, 0	#t1 set for the address of first value in mat B 
+	add $s2, $zero, $zero, $imm1, 0x120, 0	#t1 set for the address of first value in mat C 
+	add $t0, $zero, $zero, $zero, 0, 0		#Row counter
+	add $t1, $zero, $zero, $zero, 0, 0		#Column counter
+	beq $zero, $zero, $zero, LOOP, 0, 0	
 	
 LOOP:	
 	#The next 3 lines get the address of the value in matrix C we want to update
-	mac $t2, $t0, $imm1, $0, 4, 0
-	add $s2, $s2, $t2, $0, 0, 0
-	add $s2, $s2, $t1, $0, 0, 0
+	mac $t2, $t0, $imm1, $zero, 4, 0
+	add $s2, $s2, $t2, $zero, 0, 0
+	add $s2, $s2, $t1, $zero, 0, 0
 	
-	add $s0, $s0, $t2, $0, 0, 0 	#Get $s0 to point to the start of the right row in mat A
-	add $s1, $s1, $t1, $0, 0, 0	#Get $s1 to point to the start of the right col in mat B
-	beq $0, $0, $0, CALC, 0, 0
+	add $s0, $s0, $t2, $zero, 0, 0 	#Get $s0 to point to the start of the right row in mat A
+	add $s1, $s1, $t1, $zero, 0, 0	#Get $s1 to point to the start of the right col in mat B
+	beq $zero, $zero, $zero, CALC, 0, 0
 	
 CALC:	
-	bgt $0, $s0, $imm1, COND, 0x10F, 0	#If we finished (If this is true the second check must also be true)
-	bgt $0, $s1, $imm1, COND, 0x11F, 0
+	bgt $zero, $s0, $imm1, COND, 0x10F, 0	#If we finished (If this is true the second check must also be true)
+	bgt $zero, $s1, $imm1, COND, 0x11F, 0
 	
-	lw $t2, $s0, $0, $0, 0, 0	#Get the current val from A
-	lw $t3, $s1, $0, $0, 0, 0	#Get the current val from B
+	lw $t2, $s0, $zero, $zero, 0, 0	#Get the current val from A
+	lw $t3, $s1, $zero, $zero, 0, 0	#Get the current val from B
 	mac $s2, $t2, $t3, $s2, 0, 0
 	
-	add $s0, $s0, $0, $imm1, 1, 0	#Get next A val in row
-	add $s1, $s1, $0, $imm1, 4, 0	#Get next B val in col
-	beq $0, $0, $0, CALC, 0, 0
+	add $s0, $s0, $zero, $imm1, 1, 0	#Get next A val in row
+	add $s1, $s1, $zero, $imm1, 4, 0	#Get next B val in col
+	beq $zero, $zero, $zero, CALC, 0, 0
 	
 COND:
-	add $t1, $t1, $0, $imm1, 1, 0	#Advance to next column
-	blt $0, $t1, $imm1, LOOP, 4, 0	#If we havent went through all the columns	
+	add $t1, $t1, $zero, $imm1, 1, 0	#Advance to next column
+	blt $zero, $t1, $imm1, LOOP, 4, 0	#If we havent went through all the columns	
 	
-	add $t1, $s0, $0, $0, 0, 0	#Reset col counter 
-	add $t0, $t0, $0, $imm1, 1, 0	#Advance to next row
-	blt $0, $t0, $imm1, RESET, 4, 0	#Check if we have another row
+	add $t1, $s0, $zero, $zero, 0, 0	#Reset col counter 
+	add $t0, $t0, $zero, $imm1, 1, 0	#Advance to next row
+	blt $zero, $t0, $imm1, RESET, 4, 0	#Check if we have another row
+	halt $zero, $zero, $zero, $zero, 0, 0	# end
 
 RESET:
-	add $s0, $imm1, $0, $0, 0x100, 0	#t0 set for the address of first value in mat A	
-	add $s1, $imm1, $0, $0, 0x110, 0	#t1 set for the address of first value in mat B
-	add $s2, $imm1, $0, $0, 0x120, 0	#t1 set for the address of first value in mat C
-	beq $0, $0, $0, LOOP, 0, 0	
+	add $s0, $imm1, $zero, $zero, 0x100, 0	#t0 set for the address of first value in mat A	
+	add $s1, $imm1, $zero, $zero, 0x110, 0	#t1 set for the address of first value in mat B
+	add $s2, $imm1, $zero, $zero, 0x120, 0	#t1 set for the address of first value in mat C
+	beq $zero, $zero, $zero, LOOP, 0, 0	

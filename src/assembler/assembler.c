@@ -139,19 +139,19 @@ static void decode_cmds_to_output_file(FILE *output_file, char *line)
 
     /*Both imm1 and imm2 can be either a number or a label so we do the following:
     First we check if they are labels and if so we get the command index they point to.
-    If we got a number we change it from string to int using 'atoi'*/
+    If we got a number we change it from string to int using 'strtol'*/
     if (is_label(imm1)) {
         imm1_d = get_label_num(imm1);
     }
     else {
-        imm1_d = atoi(imm1);
+        imm1_d = strtol(imm1,NULL,0);
     }
 
     if (is_label(imm2)) {
         imm2_d = get_label_num(imm2);
     }
     else {
-        imm2_d = atoi(imm2);
+        imm2_d = strtol(imm2,NULL,0);
     }
 
     /*Takes the 3 LSB bits of imm1/imm2. This is used to prevent nagative numbers to be printed
@@ -167,7 +167,7 @@ static void add_data_to_memory(char* line){
     /*Used for a '.word' command - will store the second number at the first number index in 
     the data_memory array*/
     int address, value;
-    sscanf(line, ".word %d %d", &address, &value);
+    sscanf(line, ".word %i %i", &address, &value); /*%i deducts if it is int or hexa*/
     
     data_memory[address] = value;
     max_memory_index = MAX(max_memory_index,address); /*Updates the max non empty index at the data_memory array*/
