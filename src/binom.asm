@@ -1,11 +1,11 @@
-.word 100 1
-.word 101 1
+.word 100 4
+.word 101 0
 main:
 	sll $sp, $imm1, $imm2, $zero, 1, 11		# set $sp = 1 << 11 = 2048
 	lw $a0, $imm2, $zero, $zero, 0, 100		# $a0 = n
 	lw $a1, $imm2, $zero, $zero, 0, 101		# $a1 = k
 	jal $ra, $zero, $zero, $imm2, 0, binom	# $v0 = binom(n,k)
-	sw $zero, $zero, $imm2, $v0, 0, 102		# store binom(n,k) in 0x102
+	sw $v0, $zero, $imm2, $zero, 0, 102		# store binom(n,k) in 0x102
 	halt $zero, $zero, $zero, $zero, 0, 0	# end
 binom:
 	add $sp, $sp, $imm2, $zero, 0, -4		# adjust stack for 4 items
@@ -25,7 +25,7 @@ infunc:
 	add $v0, $v0, $s0, $zero, 0, 0			# $v0 = binom(n-1,k-1) + binom(n-1,k)
 	beq $zero, $zero, $zero, $imm2, 0, ret	# jump to ret
 base:
-	add $v0, $zero, $zero, $imm1, 0, 1		# $v0 = 1
+	add $v0, $zero, $zero, $imm2, 0, 1		# $v0 = 1
 ret:
 	lw $s0, $sp, $imm2, $zero, 0, 3			# load $s0 from $sp+3
 	lw $a0, $sp, $imm2, $zero, 0, 2			# load $a0 from $sp+2
