@@ -1,5 +1,5 @@
 .word 0x100 10
-.word 0x101 0
+.word 0x101 4
 main:
 	sll $sp, $imm1, $imm2, $zero, 1, 11		# set $sp = 1 << 11 = 2048
 	lw $a0, $imm2, $zero, $zero, 0, 0x100		# $a0 = n
