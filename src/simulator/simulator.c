@@ -500,14 +500,16 @@ static void write_disk_file(char *file_name) {
 }
 
 static void write_monitor_files(char *file_txt_name, char *file_yuv_name) {
-    /* Writes the monitor data file and binary file */
+    /* Writes the monitor data file */
     FILE* output_monitor_data_file = fopen(file_txt_name, "w");
-    FILE* output_monitor_binary_file = fopen(file_yuv_name, "wb");
-    for (int i=0; i<=MONITOR_DIM*MONITOR_DIM; i++){
+    for (int i=0; i<=MONITOR_DIM*MONITOR_DIM; i++) {
         fprintf(output_monitor_data_file,"%02X\n",(g_monitor)[i]);
-        fprintf(output_monitor_binary_file,"%02X\n",(g_monitor)[i]);
     }
     fclose(output_monitor_data_file);
+
+    /* Writes the monitor binary file */
+    FILE* output_monitor_binary_file = fopen(file_yuv_name, "wb");
+    fwrite(g_monitor, sizeof(char), MONITOR_DIM*MONITOR_DIM, output_monitor_binary_file);
     fclose(output_monitor_binary_file);
 }
 
@@ -521,6 +523,7 @@ int main(int argc, char const *argv[])
 
     /* imemin.txt */
     FILE* input_cmd_file = fopen(argv[1], "r");
+    
     /* dmemin.txt */
     FILE* input_data_file = fopen(argv[2], "r");
     asm_cmd_t* instr_arr = (asm_cmd_t*)malloc(MAX_ASSEMBLY_LINES * sizeof(asm_cmd_t));
@@ -541,8 +544,10 @@ int main(int argc, char const *argv[])
 
     /* Load instructions file and store them in instr_arr */
     load_instructions(input_cmd_file, &instr_arr);
+
     /* Load data memory and store in g_dmem */
     load_data_memory(input_data_file);
+
     /* Execure program */
     exec_instructions(instr_arr, &output_trace_file);
 
@@ -564,6 +569,7 @@ int main(int argc, char const *argv[])
     fclose(g_hw_reg_trace_file);
     fclose(g_leds_file);
     fclose(g_7segment_file);
+
     free(instr_arr);
     return 0;
 }
