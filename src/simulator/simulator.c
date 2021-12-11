@@ -430,7 +430,7 @@ static void load_data_memory(FILE* data_input_file) {
     }
 }
 
-static void load_disk_file(char *file_name) {
+static void load_disk_file(char const *file_name) {
     FILE* diskin_file = fopen(file_name, "r");
     char line_buffer[DATA_LINE_LEN + 2];
     int line_count = 0;
@@ -560,6 +560,9 @@ int main(int argc, char const *argv[])
     /* Load data memory and store in g_dmem */
     load_data_memory(input_data_file);
 
+    /* Load disk file */
+    load_disk_file(argv[3]);
+    
     /* Execure program */
     exec_instructions(instr_arr, output_trace_file);
 
