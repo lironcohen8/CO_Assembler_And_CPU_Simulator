@@ -21,9 +21,11 @@ static int g_is_running;
 /* Disk object */
 static disk_t g_disk;
 /* hwregtrace file */
-static FILE * g_hw_reg_trace_file;
+static FILE* g_hw_reg_trace_file;
 /* leds file */
-static FILE * g_leds_file;
+static FILE* g_leds_file;
+/* 7 segment file */
+static FILE* g_7segment_file;
 
 static const char *g_io_regs_arr[] = {"irq0enable",
                                       "irq1enable",
@@ -78,6 +80,10 @@ static void update_hw_reg_trace_file(char *type, int io_reg_index, int data) {
 
 static void update_leds_file() {
     fprintf(g_leds_file, "%d %08X\n", g_io_regs[clks], g_io_regs[leds]);
+}
+
+static void update_7segment_file() {
+    fprintf(g_7segment_file, "%d %08X\n", g_io_regs[clks], g_io_regs[display7seg]);
 }
 
 /* Array of function pointers used to call the right operation 
@@ -275,6 +281,9 @@ static void out_cmd(cpu_reg_e rd, cpu_reg_e rs, cpu_reg_e rt, cpu_reg_e rm) {
     if (g_cpu_regs[rs] + g_cpu_regs[rt] == leds) {
         update_leds_file();
     }
+    if (g_cpu_regs[rs] + g_cpu_regs[rt] == display7seg) {
+        update_7segment_file();
+    }
 }
 
 static void halt_cmd(cpu_reg_e rd, cpu_reg_e rs, cpu_reg_e rt, cpu_reg_e rm) {
@@ -457,26 +466,49 @@ static void exec_instructions(asm_cmd_t* instructions_arr, FILE* output_trace_fi
 
 static void write_memory_file(char *file_name) {
     /* Writes the memory data file */
-    FILE* output_cycles_file = fopen(file_name, "w");
+    FILE* output_memory_file = fopen(file_name, "w");
     for (int i=0; i<=DATA_MEMORY_SIZE; i++){
-        fprintf(file_name,"%08X\n",g_dmem[i]);
+        fprintf(output_memory_file,"%08X\n",g_dmem[i]);
     }
-    fclose(file_name);
+    fclose(output_memory_file);
 }
 
 static void write_regs_file(char *file_name) {
     /* Writes the regs file */
     FILE* output_cycles_file = fopen(file_name, "w");
     for (int i=3; i<=CPU_REGS_NUM; i++){
-        fprintf(file_name,"%08X\n",g_cpu_regs[i]);
+        fprintf(output_cycles_file,"%08X\n",g_cpu_regs[i]);
     }
-    fclose(file_name);
+    fclose(output_cycles_file);
 }
 
 static void write_cycles_file(char *file_name) {
     FILE* output_cycles_file = fopen(file_name, "w");
     fprintf(output_cycles_file, g_io_regs[clks]);
-    fclose(file_name);
+    fclose(output_cycles_file);
+}
+
+static void write_disk_file(char *file_name) {
+    /* Writes the disk data file */
+    FILE* output_disk_file = fopen(file_name, "w");
+    for (int i=0; i<=DISK_SECTOR_NUM; i++){
+        for (int j=0; j<=DISK_SECTOR_SIZE; j++){
+            fprintf(output_disk_file,"%08X\n",(g_disk.data)[i][j]);
+        }
+    }
+    fclose(output_disk_file);
+}
+
+static void write_monitor_files(char *file_txt_name, char *file_yuv_name) {
+    /* Writes the monitor data file and binary file */
+    FILE* output_monitor_data_file = fopen(file_txt_name, "w");
+    FILE* output_monitor_binary_file = fopen(file_yuv_name, "wb");
+    for (int i=0; i<=MONITOR_DIM*MONITOR_DIM; i++){
+        fprintf(output_monitor_data_file,"%02X\n",(g_monitor)[i]);
+        fprintf(output_monitor_binary_file,"%02X\n",(g_monitor)[i]);
+    }
+    fclose(output_monitor_data_file);
+    fclose(output_monitor_binary_file);
 }
 
 int main(int argc, char const *argv[])
@@ -500,7 +532,10 @@ int main(int argc, char const *argv[])
     g_hw_reg_trace_file = fopen(argv[8], "w");
 
     /* leds file */
-    g_leds_file = fopen(argv[10], "w");    
+    g_leds_file = fopen(argv[10], "w"); 
+
+    /* 7segment file */
+    g_7segment_file = fopen(argv[11], "w");   
 
     // TODO INIT DISK
 
@@ -519,9 +554,16 @@ int main(int argc, char const *argv[])
 
     /* Write to cycles file */
     write_cycles_file(argv[9]);
+
+    /* Write to diskout file */
+    write_disk_file(argv[12]);
     
+    /* Write monitor files */
+    write_monitor_files(argv[13], argv[14]);
+
     fclose(g_hw_reg_trace_file);
     fclose(g_leds_file);
+    fclose(g_7segment_file);
     free(instr_arr);
     return 0;
 }
