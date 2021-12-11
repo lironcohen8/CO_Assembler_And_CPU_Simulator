@@ -354,7 +354,7 @@ static void load_instructions(FILE* instr_file, asm_cmd_t** cmd_arr) {
 
 static void update_trace_file(FILE* output_trace_file, asm_cmd_t* curr_cmd) {
     /* Writes the trace file for current variables status */
-    fprintf("%03X %12X 00000000 %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X\n",
+    fprintf(output_trace_file, "%03X %12X 00000000 %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X\n",
             g_pc, 
             curr_cmd->raw_cmd, 
             sign_extension_imm(curr_cmd->imm1), 
@@ -377,11 +377,10 @@ static void update_trace_file(FILE* output_trace_file, asm_cmd_t* curr_cmd) {
 // TODO VERIFY FORUM ABOUT ORDER
 static void update_timer() {
     if (g_io_regs[timerenable] == True) {
+        g_io_regs[timercurrent]++;
         if (g_io_regs[timercurrent] == g_io_regs[timermax]) {
             g_io_regs[irq0status] = True;
             g_io_regs[timercurrent] = 0;
-        } else {
-            g_io_regs[timercurrent]++;
         }
     }
 }
@@ -438,7 +437,7 @@ static void load_disk_file(char *file_name) {
     /* stops when either (n-1) characters are read, or /n is read
     We want to read the /n char so it won't get in to the next line */
     while (fgets(line_buffer, DATA_LINE_LEN + 2, diskin_file) != NULL) {
-        sscanf(line_buffer, "%X", &g_disk[line_count / DISK_SECTOR_SIZE][line_count % DISK_SECTOR_SIZE]);
+        sscanf(line_buffer, "%X", &g_disk.data[line_count / DISK_SECTOR_SIZE][line_count % DISK_SECTOR_SIZE]);
         line_count++;
     }
 }
@@ -447,8 +446,6 @@ static void exec_instructions(asm_cmd_t* instructions_arr, FILE* output_trace_fi
     g_is_running = True;
     asm_cmd_t* curr_cmd;
     while (g_is_running) {
-        /* Update timer and clock cycles number*/
-        update_timer();
         g_io_regs[clks] = ((unsigned int)g_io_regs[clks])++;
         /* Check for interrupts */
         if (g_in_handler == False && is_irq()) {
@@ -469,6 +466,8 @@ static void exec_instructions(asm_cmd_t* instructions_arr, FILE* output_trace_fi
         update_monitor();
         /* Check for disk updates */
         update_disk();
+        /* Update timer and clock cycles number*/
+        update_timer();
         /* If the command is not branch or jump than advance PC */
         if (!is_jump_or_branch(curr_cmd->opcode)) {
             g_pc++;
@@ -496,7 +495,7 @@ static void write_regs_file(char *file_name) {
 
 static void write_cycles_file(char *file_name) {
     FILE* output_cycles_file = fopen(file_name, "w");
-    fprintf(output_cycles_file, g_io_regs[clks]);
+    fprintf(output_cycles_file, "%d", g_io_regs[clks]);
     fclose(output_cycles_file);
 }
 
