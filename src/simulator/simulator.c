@@ -79,7 +79,7 @@ static void out_cmd(cpu_reg_e, cpu_reg_e, cpu_reg_e, cpu_reg_e);
 static void halt_cmd(cpu_reg_e, cpu_reg_e, cpu_reg_e, cpu_reg_e);
 
 static void update_hw_reg_trace_file(char *type, int io_reg_index, int data) {
-    fprintf(g_hw_reg_trace_file, "%d %s %s %08X" ,g_io_regs[clks], type, g_io_regs_arr[io_reg_index], data);
+    fprintf(g_hw_reg_trace_file, "%d %s %s %08x\n" ,g_io_regs[clks], type, g_io_regs_arr[io_reg_index], data);
 }
 
 static void update_leds_file() {
@@ -479,8 +479,8 @@ static void exec_instructions(asm_cmd_t* instructions_arr, FILE* output_trace_fi
         /* Update timer and clock cycles number*/
         update_timer();
         /* Updates cycle clock */
-        unsigned int clks_uint = (unsigned int)g_io_regs[clks];
-        g_io_regs[clks] = clks_uint++;
+        // TODO CHANGE unsigned int clks_uint = (unsigned int)g_io_regs[clks];
+        g_io_regs[clks]++;
         /* If the command is not branch or jump than advance PC */
         if (!is_jump_or_branch(curr_cmd->opcode)) {
             g_pc++;
@@ -500,7 +500,7 @@ static void write_memory_file(char const *file_name) {
 static void write_regs_file(char const *file_name) {
     /* Writes the regs file */
     FILE* output_cycles_file = fopen(file_name, "w");
-    for (int i=3; i<=CPU_REGS_NUM; i++){
+    for (int i=3; i<CPU_REGS_NUM; i++){
         fprintf(output_cycles_file,"%08X\n",g_cpu_regs[i]);
     }
     fclose(output_cycles_file);
@@ -526,7 +526,7 @@ static void write_disk_file(char const *file_name) {
 static void write_monitor_files(char const *file_txt_name, char const *file_yuv_name) {
     /* Writes the monitor data file */
     FILE* output_monitor_data_file = fopen(file_txt_name, "w");
-    for (int i=0; i<=MONITOR_DIM*MONITOR_DIM; i++) {
+    for (int i=0; i<MONITOR_DIM*MONITOR_DIM; i++) {
         fprintf(output_monitor_data_file,"%02X\n",(g_monitor)[i]);
     }
     fclose(output_monitor_data_file);
