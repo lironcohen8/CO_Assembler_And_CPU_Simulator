@@ -446,7 +446,8 @@ static void exec_instructions(asm_cmd_t* instructions_arr, FILE* output_trace_fi
     g_is_running = True;
     asm_cmd_t* curr_cmd;
     while (g_is_running) {
-        g_io_regs[clks] = ((unsigned int)g_io_regs[clks])++;
+        unsigned int clks_uint = (unsigned int)g_io_regs[clks];
+        g_io_regs[clks] = clks_uint++;
         /* Check for interrupts */
         if (g_in_handler == False && is_irq()) {
             /* Now in interrupt handler */
@@ -475,7 +476,7 @@ static void exec_instructions(asm_cmd_t* instructions_arr, FILE* output_trace_fi
     }
 }
 
-static void write_memory_file(char *file_name) {
+static void write_memory_file(char const *file_name) {
     /* Writes the memory data file */
     FILE* output_memory_file = fopen(file_name, "w");
     for (int i=0; i<=DATA_MEMORY_SIZE; i++){
@@ -484,7 +485,7 @@ static void write_memory_file(char *file_name) {
     fclose(output_memory_file);
 }
 
-static void write_regs_file(char *file_name) {
+static void write_regs_file(char const *file_name) {
     /* Writes the regs file */
     FILE* output_cycles_file = fopen(file_name, "w");
     for (int i=3; i<=CPU_REGS_NUM; i++){
@@ -493,13 +494,13 @@ static void write_regs_file(char *file_name) {
     fclose(output_cycles_file);
 }
 
-static void write_cycles_file(char *file_name) {
+static void write_cycles_file(char const *file_name) {
     FILE* output_cycles_file = fopen(file_name, "w");
     fprintf(output_cycles_file, "%d", g_io_regs[clks]);
     fclose(output_cycles_file);
 }
 
-static void write_disk_file(char *file_name) {
+static void write_disk_file(char const *file_name) {
     /* Writes the disk data file */
     FILE* output_disk_file = fopen(file_name, "w");
     for (int i=0; i<=DISK_SECTOR_NUM; i++){
@@ -510,7 +511,7 @@ static void write_disk_file(char *file_name) {
     fclose(output_disk_file);
 }
 
-static void write_monitor_files(char *file_txt_name, char *file_yuv_name) {
+static void write_monitor_files(char const *file_txt_name, char const *file_yuv_name) {
     /* Writes the monitor data file */
     FILE* output_monitor_data_file = fopen(file_txt_name, "w");
     for (int i=0; i<=MONITOR_DIM*MONITOR_DIM; i++) {
@@ -560,7 +561,7 @@ int main(int argc, char const *argv[])
     load_data_memory(input_data_file);
 
     /* Execure program */
-    exec_instructions(instr_arr, &output_trace_file);
+    exec_instructions(instr_arr, output_trace_file);
 
     /* Write dmemout file with the update memory */
     write_memory_file(argv[5]);
