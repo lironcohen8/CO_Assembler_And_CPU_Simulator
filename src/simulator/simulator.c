@@ -431,6 +431,18 @@ static void load_data_memory(FILE* data_input_file) {
     }
 }
 
+static void load_disk_file(char *file_name) {
+    FILE* diskin_file = fopen(file_name, "r");
+    char line_buffer[DATA_LINE_LEN + 2];
+    int line_count = 0;
+    /* stops when either (n-1) characters are read, or /n is read
+    We want to read the /n char so it won't get in to the next line */
+    while (fgets(line_buffer, DATA_LINE_LEN + 2, diskin_file) != NULL) {
+        sscanf(line_buffer, "%X", &g_disk[line_count / DISK_SECTOR_SIZE][line_count % DISK_SECTOR_SIZE]);
+        line_count++;
+    }
+}
+
 static void exec_instructions(asm_cmd_t* instructions_arr, FILE* output_trace_file) {
     g_is_running = True;
     asm_cmd_t* curr_cmd;
