@@ -10,7 +10,7 @@ static int g_cpu_regs[CPU_REGS_NUM];
 static int g_io_regs[IO_REGS_NUM];
 /* Global flag indicating running in interrupt handler */
 static int g_in_handler = False;
-/* Gloabal monitor buffer */
+/* Global monitor buffer */
 static unsigned char g_monitor[MONITOR_DIM * MONITOR_DIM];
 /* Data memory */
 static int g_dmem[DATA_MEMORY_SIZE];
@@ -20,6 +20,34 @@ static int g_pc = 0;
 static int g_is_running;
 /* Disk object */
 static disk_t g_disk;
+/* hwregtrace file */
+static FILE * g_hw_reg_trace_file;
+/* leds file */
+static FILE * g_leds_file;
+
+static const char *g_io_regs_arr[] = {"irq0enable",
+                                      "irq1enable",
+                                      "irq2enable",
+                                      "irq0status",
+                                      "irq1status",
+                                      "irq2status",
+                                      "irqhandler",
+                                      "irqreturn",
+                                      "clks",
+                                      "leds",
+                                      "display7seg",
+                                      "timerenable",
+                                      "timercurrent",
+                                      "timermax",
+                                      "diskcmd",
+                                      "disksector",
+                                      "diskbuffer",
+                                      "diskstatus",
+                                      "reserved1",
+                                      "reserved2",
+                                      "monitoraddr",
+                                      "monitordata",
+                                      "monitorcmd"};
 
 static void add_cmd(cpu_reg_e, cpu_reg_e, cpu_reg_e, cpu_reg_e);
 static void sub_cmd(cpu_reg_e, cpu_reg_e, cpu_reg_e, cpu_reg_e);
@@ -44,6 +72,13 @@ static void in_cmd(cpu_reg_e, cpu_reg_e, cpu_reg_e, cpu_reg_e);
 static void out_cmd(cpu_reg_e, cpu_reg_e, cpu_reg_e, cpu_reg_e);
 static void halt_cmd(cpu_reg_e, cpu_reg_e, cpu_reg_e, cpu_reg_e);
 
+static void update_hw_reg_trace_file(char *type, int io_reg_index, int data) {
+    fprintf(g_hw_reg_trace_file, "%d %s %s %08X" ,g_io_regs[clks], type, g_io_regs_arr[io_reg_index], data);
+}
+
+static void update_leds_file() {
+    fprintf(g_leds_file, "%d %08X\n", g_io_regs[clks], g_io_regs[leds]);
+}
 
 /* Array of function pointers used to call the right operation 
 cmds_ptr_arr[opcode] is a function pointer to a function performing the 
@@ -231,10 +266,15 @@ static void in_cmd(cpu_reg_e rd, cpu_reg_e rs, cpu_reg_e rt, cpu_reg_e rm) {
         g_cpu_regs[rd] = 0;
     }
     g_cpu_regs[rd] = g_io_regs[g_cpu_regs[rs] + g_cpu_regs[rt]];
+    update_hw_reg_trace_file("READ", g_cpu_regs[rs] + g_cpu_regs[rt], g_cpu_regs[rd]);
 }
 
 static void out_cmd(cpu_reg_e rd, cpu_reg_e rs, cpu_reg_e rt, cpu_reg_e rm) {
     g_io_regs[g_cpu_regs[rs] + g_cpu_regs[rt]] = g_cpu_regs[rm];
+    update_hw_reg_trace_file("WRITE", g_cpu_regs[rs] + g_cpu_regs[rt], g_cpu_regs[rm]);
+    if (g_cpu_regs[rs] + g_cpu_regs[rt] == leds) {
+        update_leds_file();
+    }
 }
 
 static void halt_cmd(cpu_reg_e rd, cpu_reg_e rs, cpu_reg_e rt, cpu_reg_e rm) {
@@ -279,6 +319,7 @@ static void parse_line_to_cmd(char* line, asm_cmd_t* cmd) {
     cmd->rs = (raw >> 32) & 0xF;
     cmd->rd = (raw >> 36) & 0xF;
     cmd->opcode = (raw >> 40) & 0xFF;
+    cmd->raw_cmd = raw;
 }
 
 /* Execute a command using the functions pointers array */
@@ -300,6 +341,28 @@ static void load_instructions(FILE* instr_file, asm_cmd_t** cmd_arr) {
        (*cmd_arr)[instructions_count++] = curr_cmd;
    }
    (*cmd_arr) = (asm_cmd_t*)realloc(*cmd_arr, instructions_count * sizeof(asm_cmd_t));
+}
+
+static void update_trace_file(FILE* output_trace_file, asm_cmd_t* curr_cmd) {
+    /* Writes the trace file for current variables status */
+    fprintf("%03X %12X 00000000 %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X\n",
+            g_pc, 
+            curr_cmd->raw_cmd, 
+            sign_extension_imm(curr_cmd->imm1), 
+            sign_extension_imm(curr_cmd->imm2), 
+            g_cpu_regs[$V0],
+            g_cpu_regs[$A0], 
+            g_cpu_regs[$A1],
+            g_cpu_regs[$A2], 
+            g_cpu_regs[$T0],
+            g_cpu_regs[$T1],
+            g_cpu_regs[$T2],
+            g_cpu_regs[$S0],
+            g_cpu_regs[$S1],
+            g_cpu_regs[$S2],
+            g_cpu_regs[$GP],
+            g_cpu_regs[$SP],
+            g_cpu_regs[$RA]);
 }
 
 // TODO VERIFY FORUM ABOUT ORDER
@@ -359,11 +422,13 @@ static void load_data_memory(FILE* data_input_file) {
     }
 }
 
-static void exec_instructions(asm_cmd_t* instructions_arr) {
+static void exec_instructions(asm_cmd_t* instructions_arr, FILE* output_trace_file) {
     g_is_running = True;
     asm_cmd_t* curr_cmd;
     while (g_is_running) {
+        /* Update timer and clock cycles number*/
         update_timer();
+        g_io_regs[clks] = ((unsigned int)g_io_regs[clks])++;
         /* Check for interrupts */
         if (g_in_handler == False && is_irq()) {
             /* Now in interrupt handler */
@@ -375,6 +440,8 @@ static void exec_instructions(asm_cmd_t* instructions_arr) {
         }
         /* Fetch current command to execute */
         curr_cmd = &instructions_arr[g_pc]; 
+        /* Update trace file before executing cuurent command */
+        update_trace_file(output_trace_file, curr_cmd);
         /* Execute */
         exec_cmd(curr_cmd);
         /* Check for monitor updates */
@@ -388,6 +455,29 @@ static void exec_instructions(asm_cmd_t* instructions_arr) {
     }
 }
 
+static void write_memory_file(char *file_name) {
+    /* Writes the memory data file */
+    FILE* output_cycles_file = fopen(file_name, "w");
+    for (int i=0; i<=DATA_MEMORY_SIZE; i++){
+        fprintf(file_name,"%08X\n",g_dmem[i]);
+    }
+    fclose(file_name);
+}
+
+static void write_regs_file(char *file_name) {
+    /* Writes the regs file */
+    FILE* output_cycles_file = fopen(file_name, "w");
+    for (int i=3; i<=CPU_REGS_NUM; i++){
+        fprintf(file_name,"%08X\n",g_cpu_regs[i]);
+    }
+    fclose(file_name);
+}
+
+static void write_cycles_file(char *file_name) {
+    FILE* output_cycles_file = fopen(file_name, "w");
+    fprintf(output_cycles_file, g_io_regs[clks]);
+    fclose(file_name);
+}
 
 int main(int argc, char const *argv[])
 {
@@ -403,6 +493,15 @@ int main(int argc, char const *argv[])
     FILE* input_data_file = fopen(argv[2], "r");
     asm_cmd_t* instr_arr = (asm_cmd_t*)malloc(MAX_ASSEMBLY_LINES * sizeof(asm_cmd_t));
 
+    /* trace.txt */
+    FILE* output_trace_file = fopen(argv[7], "w");
+
+    /* hw reg trace file */
+    g_hw_reg_trace_file = fopen(argv[8], "w");
+
+    /* leds file */
+    g_leds_file = fopen(argv[10], "w");    
+
     // TODO INIT DISK
 
     /* Load instructions file and store them in instr_arr */
@@ -410,11 +509,19 @@ int main(int argc, char const *argv[])
     /* Load data memory and store in g_dmem */
     load_data_memory(input_data_file);
     /* Execure program */
-    exec_instructions(instr_arr);
+    exec_instructions(instr_arr, &output_trace_file);
 
+    /* Write dmemout file with the update memory */
+    write_memory_file(argv[5]);
 
-    /* Update dmemout with the updatede memory */
-    // TODO : put g_dmem to dmemout.txt 
+    /* Update regout file with the update regs values */
+    write_regs_file(argv[6]);
+
+    /* Write to cycles file */
+    write_cycles_file(argv[9]);
+    
+    fclose(g_hw_reg_trace_file);
+    fclose(g_leds_file);
     free(instr_arr);
     return 0;
 }

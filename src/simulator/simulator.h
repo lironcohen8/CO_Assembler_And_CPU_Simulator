@@ -45,13 +45,14 @@ typedef enum {
 } opcode_e;
 
 typedef struct {
-    opcode_e opcode:  8;
+    opcode_e opcode    :  8;
     cpu_reg_e rd       :  4;
     cpu_reg_e rs       :  4;
     cpu_reg_e rt       :  4;
     cpu_reg_e rm       :  4;
-    int imm1       : 12;
-    int imm2       : 12;
+    int imm1           : 12;
+    int imm2           : 12;
+    unsigned long long raw_cmd;
 } asm_cmd_t;
 
 typedef struct {
