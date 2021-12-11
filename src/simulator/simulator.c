@@ -1,18 +1,25 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <string.h>
 #include "simulator.h"
 
 /* CPU registers (32 bits each) */
 static int g_cpu_regs[CPU_REGS_NUM];
 /* IO registers */
 static int g_io_regs[IO_REGS_NUM];
+/* Global flag indicating running in interrupt handler */
+static int g_in_handler = False;
+/* Gloabal monitor buffer */
+static unsigned char g_monitor[MONITOR_DIM * MONITOR_DIM];
 /* Data memory */
 static int g_dmem[DATA_MEMORY_SIZE];
 /* Global program counter */
 static int g_pc = 0;
 /* Global flag indicating program is running */
 static int g_is_running;
+/* Disk object */
+static disk_t g_disk;
 
 static void add_cmd(cpu_reg_e, cpu_reg_e, cpu_reg_e, cpu_reg_e);
 static void sub_cmd(cpu_reg_e, cpu_reg_e, cpu_reg_e, cpu_reg_e);
@@ -212,12 +219,16 @@ static void sw_cmd(cpu_reg_e rd, cpu_reg_e rs, cpu_reg_e rt, cpu_reg_e rm) {
 }
 
 static void reti_cmd(cpu_reg_e rd, cpu_reg_e rs, cpu_reg_e rt, cpu_reg_e rm) {
+    g_in_handler = False;
     g_pc = g_io_regs[irqreturn];
 }
 
 static void in_cmd(cpu_reg_e rd, cpu_reg_e rs, cpu_reg_e rt, cpu_reg_e rm) {
     if (rd == $IMM1 || rd == $IMM2 || rd == $ZERO) {
         return;
+    }
+    if (g_io_regs[g_cpu_regs[rs] + g_cpu_regs[rt]] == monitorcmd) {
+        g_cpu_regs[rd] = 0;
     }
     g_cpu_regs[rd] = g_io_regs[g_cpu_regs[rs] + g_cpu_regs[rt]];
 }
@@ -247,6 +258,12 @@ static void update_immediates(asm_cmd_t* cmd) {
 
 static int is_jump_or_branch(opcode_e opcode) {
     return (opcode >= BEQ && opcode <= JAL) || (opcode == RETI);
+}
+
+static int is_irq() {
+    return (g_io_regs[irq0enable] && g_io_regs[irq0status]) ||
+           (g_io_regs[irq1enable] && g_io_regs[irq1status]) ||
+           (g_io_regs[irq2enable] && g_io_regs[irq2status]);
 }
 
 static void parse_line_to_cmd(char* line, asm_cmd_t* cmd) {
@@ -285,6 +302,53 @@ static void load_instructions(FILE* instr_file, asm_cmd_t** cmd_arr) {
    (*cmd_arr) = (asm_cmd_t*)realloc(*cmd_arr, instructions_count * sizeof(asm_cmd_t));
 }
 
+// TODO VERIFY FORUM ABOUT ORDER
+static void update_timer() {
+    if (g_io_regs[timerenable] == True) {
+        if (g_io_regs[timercurrent] == g_io_regs[timermax]) {
+            g_io_regs[irq0status] = True;
+            g_io_regs[timercurrent] = 0;
+        } else {
+            g_io_regs[timercurrent]++;
+        }
+    }
+}
+
+static void update_monitor() {
+    if (g_io_regs[monitorcmd] == True) {
+        g_monitor[g_io_regs[monitoraddr]] = g_io_regs[monitordata];
+    }
+}
+
+static void update_disk() {
+    if (g_io_regs[diskstatus] == False && g_io_regs[diskcmd] != 0) {
+        /* Mark disk as busy */
+        unsigned int sector = g_io_regs[disksector];
+        unsigned int buffer_addr = g_io_regs[diskbuffer];
+        g_io_regs[diskstatus] = True;
+        if (g_io_regs[diskcmd] == 1) {
+            /* Read command
+            Copy from disk to memory */
+            memcpy(&g_dmem[buffer_addr], g_disk.data[sector], DISK_SECTOR_SIZE);
+        } else {
+            /* Assuming legal command => Here is write command 
+            Copy from memory to disk */
+            memcpy(g_disk.data[sector], &g_dmem[buffer_addr], DISK_SECTOR_SIZE);
+        }
+    } else {
+        if (g_io_regs[diskstatus] == True) {
+            g_disk.time_in_cmd++;
+            if (g_disk.time_in_cmd == DISK_HANDLING_TIME) {
+                /* Finished operation */
+                g_io_regs[diskstatus] = False;
+                g_io_regs[diskcmd] = False;
+                g_io_regs[irq1status] = True;
+                g_disk.time_in_cmd = 0;
+            }
+        }
+    }
+}
+
 static void load_data_memory(FILE* data_input_file) {
     char line_buffer[DATA_LINE_LEN + 2];
     int line_count = 0;
@@ -299,10 +363,24 @@ static void exec_instructions(asm_cmd_t* instructions_arr) {
     g_is_running = True;
     asm_cmd_t* curr_cmd;
     while (g_is_running) {
+        update_timer();
+        /* Check for interrupts */
+        if (g_in_handler == False && is_irq()) {
+            /* Now in interrupt handler */
+            g_in_handler = True;
+            /* Save return address */
+            g_io_regs[irqreturn] = g_pc;
+            /* Junp th handler */
+            g_pc = g_io_regs[irqhandler];
+        }
         /* Fetch current command to execute */
         curr_cmd = &instructions_arr[g_pc]; 
         /* Execute */
         exec_cmd(curr_cmd);
+        /* Check for monitor updates */
+        update_monitor();
+        /* Check for disk updates */
+        update_disk();
         /* If the command is not branch or jump than advance PC */
         if (!is_jump_or_branch(curr_cmd->opcode)) {
             g_pc++;
@@ -324,6 +402,9 @@ int main(int argc, char const *argv[])
     /* dmemin.txt */
     FILE* input_data_file = fopen(argv[2], "r");
     asm_cmd_t* instr_arr = (asm_cmd_t*)malloc(MAX_ASSEMBLY_LINES * sizeof(asm_cmd_t));
+
+    // TODO INIT DISK
+
     /* Load instructions file and store them in instr_arr */
     load_instructions(input_cmd_file, &instr_arr);
     /* Load data memory and store in g_dmem */
