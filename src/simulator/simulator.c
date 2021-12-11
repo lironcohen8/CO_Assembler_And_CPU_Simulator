@@ -18,14 +18,18 @@ static int g_dmem[DATA_MEMORY_SIZE];
 static int g_pc = 0;
 /* Global flag indicating program is running */
 static int g_is_running;
+/* Global next Irq2 cycle number*/
+static int g_next_irq2 = -1;
 /* Disk object */
 static disk_t g_disk;
-/* hwregtrace file */
+/* hw reg trace file */
 static FILE* g_hw_reg_trace_file;
 /* leds file */
 static FILE* g_leds_file;
 /* 7 segment file */
 static FILE* g_7segment_file;
+/* Irq2 file */
+static FILE* g_irq2in_file;
 
 static const char *g_io_regs_arr[] = {"irq0enable",
                                       "irq1enable",
@@ -315,6 +319,16 @@ static int is_irq() {
            (g_io_regs[irq2enable] && g_io_regs[irq2status]);
 }
 
+static void update_irq2() {
+    if (g_io_regs[clks] == g_next_irq2) {
+        g_io_regs[irq2status] = True;
+        fscanf(g_irq2in_file, "%d\n", &g_next_irq2);
+    }
+    else {
+        g_io_regs[irq2status] = False;
+    }
+}
+
 static void parse_line_to_cmd(char* line, asm_cmd_t* cmd) {
     /* Each command is 48 bits so 64 bits are required */
     unsigned long long raw;
@@ -446,29 +460,27 @@ static void exec_instructions(asm_cmd_t* instructions_arr, FILE* output_trace_fi
     g_is_running = True;
     asm_cmd_t* curr_cmd;
     while (g_is_running) {
-        unsigned int clks_uint = (unsigned int)g_io_regs[clks];
-        g_io_regs[clks] = clks_uint++;
-        /* Check for interrupts */
-        if (g_in_handler == False && is_irq()) {
-            /* Now in interrupt handler */
-            g_in_handler = True;
-            /* Save return address */
-            g_io_regs[irqreturn] = g_pc;
-            /* Junp th handler */
-            g_pc = g_io_regs[irqhandler];
+        update_irq2(); /* Updates value of next interrupt time if needed */
+        if (g_in_handler == False && is_irq()) {  /* Check for interrupts */
+            g_in_handler = True; /* Now in interrupt handler */
+            g_io_regs[irqreturn] = g_pc; /* Save return address */
+            g_pc = g_io_regs[irqhandler]; /* Jump to handler */
         }
         /* Fetch current command to execute */
         curr_cmd = &instructions_arr[g_pc]; 
         /* Update trace file before executing cuurent command */
         update_trace_file(output_trace_file, curr_cmd);
         /* Execute */
-        exec_cmd(curr_cmd);
+        exec_cmd(curr_cmd); 
         /* Check for monitor updates */
         update_monitor();
         /* Check for disk updates */
         update_disk();
         /* Update timer and clock cycles number*/
         update_timer();
+        /* Updates cycle clock */
+        unsigned int clks_uint = (unsigned int)g_io_regs[clks];
+        g_io_regs[clks] = clks_uint++;
         /* If the command is not branch or jump than advance PC */
         if (!is_jump_or_branch(curr_cmd->opcode)) {
             g_pc++;
@@ -552,6 +564,10 @@ int main(int argc, char const *argv[])
     /* 7segment file */
     g_7segment_file = fopen(argv[11], "w");   
 
+    /* Irq2 file */
+    g_irq2in_file = fopen(argv[4], "r");
+    fscanf(g_irq2in_file, "%d\n", &g_next_irq2);
+
     // TODO INIT DISK
 
     /* Load instructions file and store them in instr_arr */
@@ -562,7 +578,7 @@ int main(int argc, char const *argv[])
 
     /* Load disk file */
     load_disk_file(argv[3]);
-    
+
     /* Execure program */
     exec_instructions(instr_arr, output_trace_file);
 
@@ -584,7 +600,7 @@ int main(int argc, char const *argv[])
     fclose(g_hw_reg_trace_file);
     fclose(g_leds_file);
     fclose(g_7segment_file);
-
+    fclose(g_irq2in_file);
     free(instr_arr);
     return 0;
 }
