@@ -368,7 +368,7 @@ static void load_instructions(FILE* instr_file, asm_cmd_t** cmd_arr) {
 
 static void update_trace_file(FILE* output_trace_file, asm_cmd_t* curr_cmd) {
     /* Writes the trace file for current variables status */
-    fprintf(output_trace_file, "%03X %12X 00000000 %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X %08X\n",
+    fprintf(output_trace_file, "%03X %012llX 00000000 %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x\n",
             g_pc, 
             curr_cmd->raw_cmd, 
             sign_extension_imm(curr_cmd->imm1), 
