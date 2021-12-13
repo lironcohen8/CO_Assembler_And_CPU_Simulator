@@ -462,7 +462,6 @@ static void exec_instructions(FILE* output_trace_file) {
         update_disk(); /* Check for disk updates */
         update_timer();  /* Update timer */
         update_irq2(); /* Updates value of next interrupt time if needed */
-        // TODO CHANGE unsigned int clks_uint = (unsigned int)g_io_regs[clks];
         g_io_regs[clks]++; /* Updates cycle clock */
         /* If the command is not branch or jump than advance PC */
         if (!is_jump_or_branch(curr_cmd->opcode)) {
@@ -531,7 +530,6 @@ int main(int argc, char const *argv[])
     g_irq2in_file = fopen(argv[4], "r"); /* Irq2 file */
     fscanf(g_irq2in_file, "%d\n", &g_next_irq2);
 
-    // TODO INIT DISK
     load_instructions(input_cmd_file); /* Load instructions and store them in g_cmd_arr */
     load_data_memory(input_data_file); /* Load data memory and store in g_dmem */
     load_disk_file(argv[3]); /* Load disk file */
