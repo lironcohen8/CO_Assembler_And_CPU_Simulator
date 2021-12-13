@@ -5,16 +5,16 @@ main:
 	add $t0, $zero, $zero, $zero, 0, 0		# $t0 = index = 0
 	add $s2, $zero, $zero, $imm1, 256, 0	# $s2 = 256
 	mac $s1, $s2, $s2, $zero, 0, 0			# $s1 = monitor size 65536
-	add $s2, $zero, $zero, $imm1, -256, 0	# $s2 = -256
+	add $s2, $zero, $zero, $imm1, 255, 0	# $s2 = 255
 loop:
 	bge $zero, $t0, $s1, $imm2, 0, end		# if index >= 65536 jump to end
 	sra $t1, $t0, $imm1, $zero, 8, 0		# $t1 = index/256 = i
+	and $t2, $t0, $s2, $s2, 0, 0			# $t2 = index & 255 = j
 	sub $t1, $t1, $imm1, $zero, 128, 0		# $t1 = i - 128
-	mac $t2, $s2, $t1, $t0, 0, 0			# $t2 = -256*(index/256)+index = index%256 = j
 	sub $t2, $t2, $imm1, $zero, 128, 0		# $t2 = j - 128
 	mac $t1, $t1, $t1, $zero, 0, 0			# $t1 = $t1 * $t1 = (i-128)^2
-	mac $t2, $t2, $t2, $zero, 0, 0			# $t2 = $t2 * $t2 = (j-128))^2
-	add $t1, $t1, $t2, $zero, 0, 0			# $t2 = (i-128)^2 + (j-128))^2
+	mac $t2, $t2, $t2, $zero, 0, 0			# $t2 = $t2 * $t2 = (j-128)^2
+	add $t1, $t1, $t2, $zero, 0, 0			# $t1 = (i-128)^2 + (j-128)^2
 	bgt $zero, $s0, $t2, $imm2, 0, inc		# if out of circle jump to inc
 	out $zero, $zero, imm2, $t0, 0, 20 		# if in circle set index as address
 	out $zero, $zero, $imm2, $imm1, 255, 21	# set pixel color to white
