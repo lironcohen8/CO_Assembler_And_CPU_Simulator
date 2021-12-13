@@ -8,6 +8,8 @@
 static int g_cpu_regs[CPU_REGS_NUM];
 /* IO registers */
 static int g_io_regs[IO_REGS_NUM];
+/* Commands array */
+asm_cmd_t g_cmd_arr[MAX_ASSEMBLY_LINES];
 /* Global flag indicating running in interrupt handler */
 static int g_in_handler = False;
 /* Global monitor buffer */
@@ -247,7 +249,7 @@ static void bge_cmd(cpu_reg_e rd, cpu_reg_e rs, cpu_reg_e rt, cpu_reg_e rm) {
 }
 
 static void jal_cmd(cpu_reg_e rd, cpu_reg_e rs, cpu_reg_e rt, cpu_reg_e rm) {
-    /* Save next instruction address */
+    /* Save next command address */
     g_cpu_regs[rd] = g_pc + 1;
     /* Jump */
     g_pc = g_cpu_regs[rm] & 0x00000FFF;
@@ -357,7 +359,7 @@ static void exec_cmd(asm_cmd_t* cmd) {
     cmds_ptr_arr[cmd->opcode](cmd->rd, cmd->rs, cmd->rt, cmd->rm);
 }
 
-static void load_instructions(FILE* instr_file, asm_cmd_t** cmd_arr) {
+static void load_instructions(FILE* instr_file) {
    char line_buffer[INSTRUCTION_LINE_LEN + 2];
    int instructions_count = 0;
    asm_cmd_t curr_cmd;
@@ -365,9 +367,8 @@ static void load_instructions(FILE* instr_file, asm_cmd_t** cmd_arr) {
    We want to read the /n char so it won't get in to the next line */
    while (fgets(line_buffer, INSTRUCTION_LINE_LEN + 2, instr_file) != NULL) {
        parse_line_to_cmd(line_buffer, &curr_cmd);
-       (*cmd_arr)[instructions_count++] = curr_cmd;
+       g_cmd_arr[instructions_count++] = curr_cmd;
    }
-   (*cmd_arr) = (asm_cmd_t*)realloc(*cmd_arr, instructions_count * sizeof(asm_cmd_t));
 }
 
 static void update_trace_file(FILE* output_trace_file, asm_cmd_t* curr_cmd) {
@@ -462,7 +463,7 @@ static void load_disk_file(char const *file_name) {
     }
 }
 
-static void exec_instructions(asm_cmd_t* instructions_arr, FILE* output_trace_file) {
+static void exec_instructions(FILE* output_trace_file) {
     g_is_running = True;
     asm_cmd_t* curr_cmd;
     while (g_is_running) {
@@ -472,8 +473,8 @@ static void exec_instructions(asm_cmd_t* instructions_arr, FILE* output_trace_fi
             g_pc = g_io_regs[irqhandler]; /* Jump to handler */
         }
         /* Fetch current command to execute */
-        curr_cmd = &instructions_arr[g_pc]; 
-        /* Update trace file before executing cuurent command */
+        curr_cmd = &g_cmd_arr[g_pc]; 
+        /* Update trace file before executing current command */
         update_trace_file(output_trace_file, curr_cmd);
         /* Execute */
         exec_cmd(curr_cmd); 
@@ -557,7 +558,6 @@ int main(int argc, char const *argv[])
     
     /* dmemin.txt */
     FILE* input_data_file = fopen(argv[2], "r");
-    asm_cmd_t* instr_arr = (asm_cmd_t*)malloc(MAX_ASSEMBLY_LINES * sizeof(asm_cmd_t));
 
     /* trace.txt */
     FILE* output_trace_file = fopen(argv[7], "w");
@@ -577,8 +577,8 @@ int main(int argc, char const *argv[])
 
     // TODO INIT DISK
 
-    /* Load instructions file and store them in instr_arr */
-    load_instructions(input_cmd_file, &instr_arr);
+    /* Load instructions file and store them in g_cmd_arr */
+    load_instructions(input_cmd_file);
 
     /* Load data memory and store in g_dmem */
     load_data_memory(input_data_file);
@@ -587,7 +587,7 @@ int main(int argc, char const *argv[])
     load_disk_file(argv[3]);
 
     /* Execure program */
-    exec_instructions(instr_arr, output_trace_file);
+    exec_instructions(output_trace_file);
 
     /* Write dmemout file with the update memory */
     write_memory_file(argv[5]);
@@ -608,6 +608,5 @@ int main(int argc, char const *argv[])
     fclose(g_leds_file);
     fclose(g_7segment_file);
     fclose(g_irq2in_file);
-    free(instr_arr);
     return 0;
 }
