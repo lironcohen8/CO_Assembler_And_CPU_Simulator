@@ -78,7 +78,7 @@ static int get_opcode_num(char *opcode_str)
 static int get_reg_num(char *reg_str)
 {
     /*Returns the index of the register*/
-    for (int i = 0; i < OPCODES_NUM; i++)
+    for (int i = 0; i < CPU_REGS_NUM; i++)
     {
         if (strcmp(reg_str, regs_arr[i]) == 0)
         {
