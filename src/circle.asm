@@ -8,7 +8,7 @@ main:
 	add $s2, $zero, $zero, $imm1, 255, 0	# $s2 = 255
 loop:
 	bge $zero, $t0, $s1, $imm2, 0, end		# if index >= 65536 jump to end
-	sra $t1, $t0, $imm1, $zero, 8, 0		# $t1 = index/256 = i
+	sra $t1, $t0, $imm1, $zero, 8, 0		# $t1 = index / 256 = i
 	and $t2, $t0, $s2, $s2, 0, 0			# $t2 = index & 255 = j
 	sub $t1, $t1, $imm1, $zero, 128, 0		# $t1 = i - 128
 	sub $t2, $t2, $imm1, $zero, 128, 0		# $t2 = j - 128
@@ -20,7 +20,7 @@ loop:
 	out $zero, $zero, $imm2, $imm1, 255, 21	# set pixel color to white
 	out $zero, $zero, $imm2, $imm1, 1, 22	# draw pixel
 inc:
-	add $t0, $t0, $imm1, $zero, 1, 0		# index++;
+	add $t0, $t0, $imm1, $zero, 1, 0		# index++
 	beq $zero, $zero, $zero, $imm2, 0, loop	# jump to loop
 end:
 	halt $zero, $zero, $zero, $zero, 0, 0	# halt
