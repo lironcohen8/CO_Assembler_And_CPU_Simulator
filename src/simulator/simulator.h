@@ -15,6 +15,7 @@
 #define DISK_SECTOR_NUM             (128)
 #define DISK_HANDLING_TIME          (1024)
 
+#define MAX(X, Y)               (((X) > (Y)) ? (X) : (Y))
 #define False                       (0)
 #define True                        (1)
 

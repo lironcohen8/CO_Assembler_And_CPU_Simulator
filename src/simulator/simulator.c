@@ -30,6 +30,7 @@ static FILE* g_leds_file;
 static FILE* g_7segment_file;
 /* Irq2 file */
 static FILE* g_irq2in_file;
+int g_max_memory_index; /* Holds the max non empty index in the data array */
 
 static const char *g_io_regs_arr[] = {"irq0enable",
                                       "irq1enable",
@@ -83,11 +84,11 @@ static void update_hw_reg_trace_file(char *type, int io_reg_index, int data) {
 }
 
 static void update_leds_file() {
-    fprintf(g_leds_file, "%d %08X\n", g_io_regs[clks], g_io_regs[leds]);
+    fprintf(g_leds_file, "%d %08x\n", g_io_regs[clks], g_io_regs[leds]);
 }
 
 static void update_7segment_file() {
-    fprintf(g_7segment_file, "%d %08X\n", g_io_regs[clks], g_io_regs[display7seg]);
+    fprintf(g_7segment_file, "%d %08x\n", g_io_regs[clks], g_io_regs[display7seg]);
 }
 
 /* Array of function pointers used to call the right operation 
@@ -261,6 +262,9 @@ static void lw_cmd(cpu_reg_e rd, cpu_reg_e rs, cpu_reg_e rt, cpu_reg_e rm) {
 
 static void sw_cmd(cpu_reg_e rd, cpu_reg_e rs, cpu_reg_e rt, cpu_reg_e rm) {
     g_dmem[g_cpu_regs[rs] + g_cpu_regs[rt]] = g_cpu_regs[rm] + g_cpu_regs[rd];
+    if (g_cpu_regs[rm] + g_cpu_regs[rd] != 0) {
+        g_max_memory_index = MAX(g_max_memory_index, g_cpu_regs[rs] + g_cpu_regs[rt]);
+    }
 }
 
 static void reti_cmd(cpu_reg_e rd, cpu_reg_e rs, cpu_reg_e rt, cpu_reg_e rm) {
@@ -442,6 +446,7 @@ static void load_data_memory(FILE* data_input_file) {
     while (fgets(line_buffer, DATA_LINE_LEN + 2, data_input_file) != NULL) {
         sscanf(line_buffer, "%X", &g_dmem[line_count++]);
     }
+    g_max_memory_index = line_count-1;
 }
 
 static void load_disk_file(char const *file_name) {
@@ -460,7 +465,6 @@ static void exec_instructions(asm_cmd_t* instructions_arr, FILE* output_trace_fi
     g_is_running = True;
     asm_cmd_t* curr_cmd;
     while (g_is_running) {
-        update_irq2(); /* Updates value of next interrupt time if needed */
         if (g_in_handler == False && is_irq()) {  /* Check for interrupts */
             g_in_handler = True; /* Now in interrupt handler */
             g_io_regs[irqreturn] = g_pc; /* Save return address */
@@ -478,6 +482,8 @@ static void exec_instructions(asm_cmd_t* instructions_arr, FILE* output_trace_fi
         update_disk();
         /* Update timer and clock cycles number*/
         update_timer();
+        /* Updates value of next interrupt time if needed */
+        update_irq2();
         /* Updates cycle clock */
         // TODO CHANGE unsigned int clks_uint = (unsigned int)g_io_regs[clks];
         g_io_regs[clks]++;
@@ -491,7 +497,7 @@ static void exec_instructions(asm_cmd_t* instructions_arr, FILE* output_trace_fi
 static void write_memory_file(char const *file_name) {
     /* Writes the memory data file */
     FILE* output_memory_file = fopen(file_name, "w");
-    for (int i=0; i<=DATA_MEMORY_SIZE; i++){
+    for (int i=0; i<=g_max_memory_index; i++){
         fprintf(output_memory_file,"%08X\n",g_dmem[i]);
     }
     fclose(output_memory_file);
