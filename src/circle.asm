@@ -9,10 +9,12 @@ main:
 loop:
 	bge $zero, $t0, $s1, $imm2, 0, end		# if index >= 65536 jump to end
 	sra $t1, $t0, $imm1, $zero, 8, 0		# $t1 = index/256 = i
+	sub $t1, $t1, $imm1, $zero, 128, 0		# $t1 = i - 128
 	mac $t2, $s2, $t1, $t0, 0, 0			# $t2 = -256*(index/256)+index = index%256 = j
-	mac $t1, $t1, $t1, $zero, 0, 0			# $t1 = $t1 * $t1 = i^2
-	mac $t2, $t2, $t2, $zero, 0, 0			# $t2 = $t2 * $t2 = j^2
-	add $t1, $t1, $t2, $zero, 0, 0			# $t2 = i^2 + j^2
+	sub $t2, $t2, $imm1, $zero, 128, 0		# $t2 = j - 128
+	mac $t1, $t1, $t1, $zero, 0, 0			# $t1 = $t1 * $t1 = (i-128)^2
+	mac $t2, $t2, $t2, $zero, 0, 0			# $t2 = $t2 * $t2 = (j-128))^2
+	add $t1, $t1, $t2, $zero, 0, 0			# $t2 = (i-128)^2 + (j-128))^2
 	bgt $zero, $s0, $t2, $imm2, 0, inc		# if out of circle jump to inc
 	out $zero, $zero, imm2, $t0, 0, 20 		# if in circle set index as address
 	out $zero, $zero, $imm2, $imm1, 255, 21	# set pixel color to white
