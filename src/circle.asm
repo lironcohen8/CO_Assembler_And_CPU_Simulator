@@ -1,4 +1,4 @@
-.word 0x100 10
+.word 0x100 100
 main:
 	lw $s0, $zero, $imm2, $zero, 0, 0x100	# $s0 = R from address 0x100
 	mac $s0, $s0, $s0, $zero, 0, 0			# $s0 = R^2
