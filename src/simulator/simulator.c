@@ -406,6 +406,7 @@ static void update_timer() {
 static void update_monitor() {
     if (g_io_regs[monitorcmd] == True) {
         g_monitor[g_io_regs[monitoraddr]] = g_io_regs[monitordata];
+        g_io_regs[monitorcmd] = False;
     }
 }
 
