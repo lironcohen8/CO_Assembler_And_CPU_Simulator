@@ -8,20 +8,20 @@
 #define OPCODES_NUM             (22)
 #define MAX_OPCODE_LENGTH       (5)
 #define MAX_REG_LENGTH          (5)
-#define CPU_REGS_NUM                (16)
+#define CPU_REGS_NUM            (16)
 #define MAX_ASSEMBLY_LINES      (4096)
 #define DATA_MEMORY_SIZE        (4096)
 #define OUTPUT_INSTR_FILE_NAME  "imemin.txt"
 #define OUTPUT_DATA_FILE_NAME   "dmemin.txt"
 #define MAX(X, Y)               (((X) > (Y)) ? (X) : (Y))
 
-int max_memory_index = 0; /*Holds the max non empty index in the data array*/
-int command_counter = 0;
-static int label_count = 0; 
-int data_memory[DATA_MEMORY_SIZE]; /*The data array - will store all the '.word' commands*/
-label_t labels_arr[MAX_ASSEMBLY_LINES]; /*This array will hold all the labels and their index in the code*/
+int g_max_memory_index = 0; /* Holds the max non empty index in the data array */
+int g_command_counter = 0;
+static int g_label_count = 0; 
+int g_data_memory[DATA_MEMORY_SIZE]; /* Stores all the '.word' commands */
+label_t g_labels_arr[MAX_ASSEMBLY_LINES]; /* Stores all the labels and their indexes in the code */
 
-/*Dictionaries for the opcode and regs decoding*/
+/* Dictionaries for the opcode and regs decoding */
 static const char *opcodes_arr[] = {"add",
                                     "sub",
                                     "mac",
@@ -88,15 +88,15 @@ static int get_reg_num(char *reg_str)
     return -1;
 }
 
-/*Helper functions for line classification*/
+/* Helper functions for line classification */
 static int get_label_num(char *label)
 {
     /*Returns the command index the label is pointing to*/
-    for (int i = 0; i < label_count; i++)
+    for (int i = 0; i < g_label_count; i++)
     {
-        if (strcmp(label, labels_arr[i].label) == 0)
+        if (strcmp(label, g_labels_arr[i].label) == 0)
         {
-            return labels_arr[i].cmd_index;
+            return g_labels_arr[i].cmd_index;
         }
     }
 }
@@ -122,7 +122,7 @@ static int is_label(char *imm)
     return (imm[0] >= 'a' && imm[0] <= 'z') || (imm[0] >= 'A' && imm[0] <= 'Z');
 }
 
-/*General helper functions*/
+/* General helper functions */
 static void decode_cmds_to_output_file(FILE *output_file, char *line)
 {
     /*This function is used to parse the line*/
@@ -165,22 +165,22 @@ static void decode_cmds_to_output_file(FILE *output_file, char *line)
 
 static void add_data_to_memory(char* line){
     /*Used for a '.word' command - will store the second number at the first number index in 
-    the data_memory array*/
+    the g_data_memory array*/
     int address, value;
     sscanf(line, ".word %i %i", &address, &value); /*%i deducts if it is int or hexa*/
     
-    data_memory[address] = value;
-    max_memory_index = MAX(max_memory_index,address); /*Updates the max non empty index at the data_memory array*/
+    g_data_memory[address] = value;
+    g_max_memory_index = MAX(g_max_memory_index,address); /*Updates the max non empty index at the data_memory array*/
 }
 
 static void write_memory_file(FILE* output_data_file){
     /*Writes the memory data file*/
-    for (int i=0; i<=max_memory_index; i++){
-        fprintf(output_data_file,"%08X\n",data_memory[i]);
+    for (int i=0; i<=g_max_memory_index; i++){
+        fprintf(output_data_file,"%08X\n",g_data_memory[i]);
     }
 }
 
-/*Line functions*/
+/* Line functions */
 static void clear_leading_white_spaces(char** line) {
     /*Trims leading spaces in a line by advancing the pointer to the line until the first 
     non '\n', '\t' or ' ' char*/
@@ -226,7 +226,7 @@ static int line_has_command(char* line){
     return get_opcode_num(first_word)>-1; /*If we get a positive value then the first word is a valid opcode*/
 }
 
-/*The main function used to pass over the input file*/
+/* The main function used to pass over the input file */
 static void pass_over_file(int pass_num, FILE* asm_program ,FILE* output_file){
     char* line = (char*)malloc(MAX_LINE_LENGTH);
     char* base_line_ptr = line;
@@ -244,9 +244,9 @@ static void pass_over_file(int pass_num, FILE* asm_program ,FILE* output_file){
 
                 label_t tmp_label = {
                     .label = tmp_label_str,
-                    .cmd_index = command_counter}; 
+                    .cmd_index = g_command_counter}; 
                 
-                labels_arr[label_count++] = tmp_label;
+                g_labels_arr[g_label_count++] = tmp_label;
             }
             line += (colon_index + 1); /*Skips the label (if there is no label it won't do anything)*/
 
@@ -258,7 +258,7 @@ static void pass_over_file(int pass_num, FILE* asm_program ,FILE* output_file){
             }
             else {
                 if (line_has_command(line)==1){ /*If the line have a command we count it*/
-                    command_counter++;
+                    g_command_counter++;
                     if (pass_num == 2) { /*On the second pass we write the decoded command to the output file*/
                         decode_cmds_to_output_file(output_file, line);
                     }
@@ -268,9 +268,8 @@ static void pass_over_file(int pass_num, FILE* asm_program ,FILE* output_file){
                                     otherwise the calloc for the line might not be enough*/
         }
     }
-    command_counter = 0;
+    g_command_counter = 0;
 }
-
 
 int main(int argc, char const *argv[]) {
     FILE* asm_program = fopen(argv[1], "r");

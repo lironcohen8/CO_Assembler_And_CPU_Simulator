@@ -4,35 +4,21 @@
 #include <string.h>
 #include "simulator.h"
 
-/* CPU registers (32 bits each) */
-static int g_cpu_regs[CPU_REGS_NUM];
-/* IO registers */
-static int g_io_regs[IO_REGS_NUM];
-/* Commands array */
-asm_cmd_t g_cmd_arr[MAX_ASSEMBLY_LINES];
-/* Global flag indicating running in interrupt handler */
-static int g_in_handler = False;
-/* Global monitor buffer */
-static unsigned char g_monitor[MONITOR_DIM * MONITOR_DIM];
-/* Data memory */
-static int g_dmem[DATA_MEMORY_SIZE];
-/* Global program counter */
-static int g_pc = 0;
-/* Global flag indicating program is running */
-static int g_is_running;
-/* Global next Irq2 cycle number*/
-static int g_next_irq2 = -1;
-/* Disk object */
-static disk_t g_disk;
-/* hw reg trace file */
-static FILE* g_hw_reg_trace_file;
-/* leds file */
-static FILE* g_leds_file;
-/* 7 segment file */
-static FILE* g_7segment_file;
-/* Irq2 file */
-static FILE* g_irq2in_file;
-int g_max_memory_index; /* Holds the max non empty index in the data array */
+static int g_cpu_regs[CPU_REGS_NUM]; /* CPU registers (32 bits each) */
+static int g_io_regs[IO_REGS_NUM]; /* IO registers */
+asm_cmd_t g_cmd_arr[MAX_ASSEMBLY_LINES]; /* Commands array */
+static int g_in_handler = False; /* Flag indicating running in interrupt handler */
+static unsigned char g_monitor[MONITOR_DIM * MONITOR_DIM]; /* Global monitor buffer */
+static int g_dmem[DATA_MEMORY_SIZE]; /* Data memory */
+static int g_pc = 0; /* Program counter */
+static int g_is_running; /* Flag indicating program is running */
+static int g_next_irq2 = -1; /* Next Irq2 cycle number */
+static disk_t g_disk; /* Disk object */
+static FILE* g_io_reg_trace_file; /* IO reg trace file */
+static FILE* g_leds_file; /* leds file */
+static FILE* g_7segment_file; /* 7 segment file */
+static FILE* g_irq2in_file; /* Irq2 file */
+int g_max_memory_index; /* Holds the max non empty index in data mem array */
 
 static const char *g_io_regs_arr[] = {"irq0enable",
                                       "irq1enable",
@@ -82,7 +68,7 @@ static void out_cmd(cpu_reg_e, cpu_reg_e, cpu_reg_e, cpu_reg_e);
 static void halt_cmd(cpu_reg_e, cpu_reg_e, cpu_reg_e, cpu_reg_e);
 
 static void update_hw_reg_trace_file(char *type, int io_reg_index, int data) {
-    fprintf(g_hw_reg_trace_file, "%d %s %s %08x\n" ,g_io_regs[clks], type, g_io_regs_arr[io_reg_index], data);
+    fprintf(g_io_reg_trace_file, "%d %s %s %08x\n" ,g_io_regs[clks], type, g_io_regs_arr[io_reg_index], data);
 }
 
 static void update_leds_file() {
@@ -351,12 +337,10 @@ static void parse_line_to_cmd(char* line, asm_cmd_t* cmd) {
     cmd->raw_cmd = raw;
 }
 
-/* Execute a command using the functions pointers array */
 static void exec_cmd(asm_cmd_t* cmd) {
-    /* $imm1 and $imm2 should hold immediets value */
-    update_immediates(cmd);
-    /* Execute the command */
-    cmds_ptr_arr[cmd->opcode](cmd->rd, cmd->rs, cmd->rt, cmd->rm);
+    /* Execute a command using the functions pointers array */
+    update_immediates(cmd); /* $imm1 and $imm2 should hold immediets value */
+    cmds_ptr_arr[cmd->opcode](cmd->rd, cmd->rs, cmd->rt, cmd->rm); /* Execute the command */
 }
 
 static void load_instructions(FILE* instr_file) {
@@ -393,7 +377,6 @@ static void update_trace_file(FILE* output_trace_file, asm_cmd_t* curr_cmd) {
             g_cpu_regs[$RA]);
 }
 
-// TODO VERIFY FORUM ABOUT ORDER
 static void update_timer() {
     if (g_io_regs[timerenable] == True) {
         g_io_regs[timercurrent]++;
@@ -472,23 +455,15 @@ static void exec_instructions(FILE* output_trace_file) {
             g_io_regs[irqreturn] = g_pc; /* Save return address */
             g_pc = g_io_regs[irqhandler]; /* Jump to handler */
         }
-        /* Fetch current command to execute */
-        curr_cmd = &g_cmd_arr[g_pc]; 
-        /* Update trace file before executing current command */
-        update_trace_file(output_trace_file, curr_cmd);
-        /* Execute */
-        exec_cmd(curr_cmd); 
-        /* Check for monitor updates */
-        update_monitor();
-        /* Check for disk updates */
-        update_disk();
-        /* Update timer and clock cycles number*/
-        update_timer();
-        /* Updates value of next interrupt time if needed */
-        update_irq2();
-        /* Updates cycle clock */
+        curr_cmd = &g_cmd_arr[g_pc]; /* Fetch current command to execute */
+        update_trace_file(output_trace_file, curr_cmd); /* Update trace file before executing command */
+        exec_cmd(curr_cmd); /* Execute */ 
+        update_monitor(); /* Check for monitor updates */
+        update_disk(); /* Check for disk updates */
+        update_timer();  /* Update timer */
+        update_irq2(); /* Updates value of next interrupt time if needed */
         // TODO CHANGE unsigned int clks_uint = (unsigned int)g_io_regs[clks];
-        g_io_regs[clks]++;
+        g_io_regs[clks]++; /* Updates cycle clock */
         /* If the command is not branch or jump than advance PC */
         if (!is_jump_or_branch(curr_cmd->opcode)) {
             g_pc++;
@@ -547,64 +522,27 @@ static void write_monitor_files(char const *file_txt_name, char const *file_yuv_
 
 int main(int argc, char const *argv[])
 {
-    /* FOR DEBUGGING in launch.json
-    "args": [
-        "C:\\Users\\User1\\OneDrive\\Desktop\\CompStructProj\\ComputerOrganizationProject\\src\\assembler\\imemin.txt",
-        "C:\\Users\\User1\\OneDrive\\Desktop\\CompStructProj\\ComputerOrganizationProject\\src\\assembler\\dmemin.txt"],
-    */
-
-    /* imemin.txt */
-    FILE* input_cmd_file = fopen(argv[1], "r");
-    
-    /* dmemin.txt */
-    FILE* input_data_file = fopen(argv[2], "r");
-
-    /* trace.txt */
-    FILE* output_trace_file = fopen(argv[7], "w");
-
-    /* hw reg trace file */
-    g_hw_reg_trace_file = fopen(argv[8], "w");
-
-    /* leds file */
-    g_leds_file = fopen(argv[10], "w"); 
-
-    /* 7segment file */
-    g_7segment_file = fopen(argv[11], "w");   
-
-    /* Irq2 file */
-    g_irq2in_file = fopen(argv[4], "r");
+    FILE* input_cmd_file = fopen(argv[1], "r"); /* imemin.txt */
+    FILE* input_data_file = fopen(argv[2], "r"); /* dmemin.txt */
+    FILE* output_trace_file = fopen(argv[7], "w"); /* trace.txt */
+    g_io_reg_trace_file = fopen(argv[8], "w"); /* IO reg trace file */
+    g_leds_file = fopen(argv[10], "w"); /* leds file */
+    g_7segment_file = fopen(argv[11], "w"); /* 7segment file */   
+    g_irq2in_file = fopen(argv[4], "r"); /* Irq2 file */
     fscanf(g_irq2in_file, "%d\n", &g_next_irq2);
 
     // TODO INIT DISK
+    load_instructions(input_cmd_file); /* Load instructions and store them in g_cmd_arr */
+    load_data_memory(input_data_file); /* Load data memory and store in g_dmem */
+    load_disk_file(argv[3]); /* Load disk file */
+    exec_instructions(output_trace_file); /* Execure program */
+    write_memory_file(argv[5]); /* Write dmemout file with the update memory */
+    write_regs_file(argv[6]); /* Update regout file with the update regs values */
+    write_cycles_file(argv[9]); /* Write to cycles file */
+    write_disk_file(argv[12]); /* Write to diskout file */
+    write_monitor_files(argv[13], argv[14]); /* Write monitor files */
 
-    /* Load instructions file and store them in g_cmd_arr */
-    load_instructions(input_cmd_file);
-
-    /* Load data memory and store in g_dmem */
-    load_data_memory(input_data_file);
-
-    /* Load disk file */
-    load_disk_file(argv[3]);
-
-    /* Execure program */
-    exec_instructions(output_trace_file);
-
-    /* Write dmemout file with the update memory */
-    write_memory_file(argv[5]);
-
-    /* Update regout file with the update regs values */
-    write_regs_file(argv[6]);
-
-    /* Write to cycles file */
-    write_cycles_file(argv[9]);
-
-    /* Write to diskout file */
-    write_disk_file(argv[12]);
-    
-    /* Write monitor files */
-    write_monitor_files(argv[13], argv[14]);
-
-    fclose(g_hw_reg_trace_file);
+    fclose(g_io_reg_trace_file);
     fclose(g_leds_file);
     fclose(g_7segment_file);
     fclose(g_irq2in_file);
