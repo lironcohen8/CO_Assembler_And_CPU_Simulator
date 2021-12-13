@@ -521,8 +521,8 @@ static void write_cycles_file(char const *file_name) {
 static void write_disk_file(char const *file_name) {
     /* Writes the disk data file */
     FILE* output_disk_file = fopen(file_name, "w");
-    for (int i=0; i<=DISK_SECTOR_NUM; i++){
-        for (int j=0; j<=DISK_SECTOR_SIZE; j++){
+    for (int i=0; i<DISK_SECTOR_NUM; i++){
+        for (int j=0; j<DISK_SECTOR_SIZE; j++){
             fprintf(output_disk_file,"%08X\n",(g_disk.data)[i][j]);
         }
     }
