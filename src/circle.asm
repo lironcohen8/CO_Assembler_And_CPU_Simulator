@@ -18,7 +18,7 @@ loop:
 	out $zero, $zero, $imm2, $imm1, 255, 21	# set pixel color to white
 	out $zero, $zero, $imm2, $imm1, 1, 22	# draw pixel
 inc:
-	add $t0, $zero, $imm1, $zero, 1, 0		# index++;
+	add $t0, $t0, $imm1, $zero, 1, 0		# index++;
 	beq $zero, $zero, $zero, $imm2, 0, loop	# jump to loop
 end:
 	halt $zero, $zero, $zero, $zero, 0, 0	# halt
