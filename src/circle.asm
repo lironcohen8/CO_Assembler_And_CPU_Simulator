@@ -1,4 +1,4 @@
-.word 0x100 10
+.word 0x100 5
 main:
 	lw $s0, $zero, $imm2, $zero, 0, 0x100	# $s0 = R from address 0x100
 	mac $s0, $s0, $s0, $zero, 0, 0			# $s0 = R^2
@@ -16,7 +16,7 @@ loop:
 	mac $t2, $t2, $t2, $zero, 0, 0			# $t2 = $t2 * $t2 = (j-128)^2
 	add $t1, $t1, $t2, $zero, 0, 0			# $t1 = (i-128)^2 + (j-128)^2
 	bgt $zero, $s0, $t2, $imm2, 0, inc		# if out of circle jump to inc
-	out $zero, $zero, imm2, $t0, 0, 20 		# if in circle set index as address
+	out $zero, $zero, $imm2, $t0, 0, 20 	# if in circle set index as address
 	out $zero, $zero, $imm2, $imm1, 255, 21	# set pixel color to white
 	out $zero, $zero, $imm2, $imm1, 1, 22	# draw pixel
 inc:
