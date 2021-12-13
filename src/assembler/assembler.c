@@ -268,6 +268,7 @@ static void pass_over_file(int pass_num, FILE* asm_program ,FILE* output_file){
                                     otherwise the calloc for the line might not be enough*/
         }
     }
+    command_counter = 0;
 }
 
 
