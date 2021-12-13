@@ -1,9 +1,10 @@
 .word 0x100 10
 main:
-	lw $s0, $zero, $imm2, $zero, 0, 0x100		# $s0 = R from address 0x100
+	lw $s0, $zero, $imm2, $zero, 0, 0x100	# $s0 = R from address 0x100
 	mac $s0, $s0, $s0, $zero, 0, 0			# $s0 = R^2
 	add $t0, $zero, $zero, $zero, 0, 0		# $t0 = index = 0
-	add $s1, $zero, $zero, $imm1, 65536, 0	# $s1 = 65536
+	add $s2, $zero, $zero, $imm1, 256, 0	# $s2 = -256
+	mac $s1, $s2, $s2, $zero, 0, 0			# $s1 = monitor size 65536
 	add $s2, $zero, $zero, $imm1, -256, 0	# $s2 = -256
 loop:
 	bgt $zero, $t0, $s1, $imm2, 0, end		# if index >= 65536 jump to end
