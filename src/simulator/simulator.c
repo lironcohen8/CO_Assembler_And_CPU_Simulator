@@ -381,8 +381,13 @@ static void update_timer() {
     if (g_io_regs[timerenable] == True) {
         g_io_regs[timercurrent]++;
         if (g_io_regs[timercurrent] == g_io_regs[timermax]) {
+            /* Timer is enabled and it's time to interrupt */
             g_io_regs[irq0status] = True;
+            /* reset timer */
             g_io_regs[timercurrent] = 0;
+        } else {
+            /* Timer is enabled but it's not time for interrupt yet */
+            g_io_regs[irq0status] = False;
         }
     }
 }
