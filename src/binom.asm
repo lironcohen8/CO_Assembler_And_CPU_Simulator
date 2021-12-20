@@ -2,10 +2,10 @@
 .word 0x101 4
 main:
 	sll $sp, $imm1, $imm2, $zero, 1, 11		# set $sp = 1 << 11 = 2048
-	lw $a0, $imm2, $zero, $zero, 0, 0x100		# $a0 = n
-	lw $a1, $imm2, $zero, $zero, 0, 0x101		# $a1 = k
+	lw $a0, $imm2, $zero, $zero, 0, 0x100	# $a0 = n
+	lw $a1, $imm2, $zero, $zero, 0, 0x101	# $a1 = k
 	jal $ra, $zero, $zero, $imm2, 0, binom	# $v0 = binom(n,k)
-	sw $v0, $zero, $imm2, $zero, 0, 0x102		# store binom(n,k) in 0x102
+	sw $v0, $zero, $imm2, $zero, 0, 0x102	# store binom(n,k) in 0x102
 	halt $zero, $zero, $zero, $zero, 0, 0	# end
 binom:
 	add $sp, $sp, $imm2, $zero, 0, -4		# adjust stack for 4 items
