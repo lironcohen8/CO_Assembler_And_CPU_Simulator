@@ -1,12 +1,11 @@
-*https://moodle.tau.ac.il/mod/forum/discuss.php?d=33373
-*https://moodle.tau.ac.il/mod/forum/discuss.php?d=34824
-*https://moodle.tau.ac.il/mod/forum/discuss.php?d=28522
-*https://moodle.tau.ac.il/mod/forum/discuss.php?d=37595
-*https://moodle.tau.ac.il/mod/forum/discuss.php?d=37670
-*https://moodle.tau.ac.il/mod/forum/discuss.php?d=43485 לבדוק שהקבצים נפתוח ואלי גם שמאלוקים לא נכשלו
-*https://moodle.tau.ac.il/mod/forum/discuss.php?d=38123
-*https://moodle.tau.ac.il/mod/forum/discuss.php?d=42546 יחסית פירוט של גדי על ההגשה
-*https://moodle.tau.ac.il/mod/forum/discuss.php?d=42897 הוספת טיפול בשגיאות בסימולטור אבל לא באסמבלר
-* לכתוב תיעוד
-* לעבור שוב על המטלה ולראות שלא פספסנו כלום
-* להעביר לקובץ sln
+1. https://moodle.tau.ac.il/mod/forum/discuss.php?d=33373
+2. https://moodle.tau.ac.il/mod/forum/discuss.php?d=34824
+3. https://moodle.tau.ac.il/mod/forum/discuss.php?d=28522
+4. https://moodle.tau.ac.il/mod/forum/discuss.php?d=37670
+5. https://moodle.tau.ac.il/mod/forum/discuss.php?d=43485 לבדוק שהקבצים נפתוח ואלי גם שמאלוקים לא נכשלו
+6. https://moodle.tau.ac.il/mod/forum/discuss.php?d=38123
+7. https://moodle.tau.ac.il/mod/forum/discuss.php?d=42546 יחסית פירוט של גדי על ההגשה
+8. https://moodle.tau.ac.il/mod/forum/discuss.php?d=42897 הוספת טיפול בשגיאות בסימולטור אבל לא באסמבלר
+9. לכתוב תיעוד
+10. לעבור שוב על המטלה ולראות שלא פספסנו כלום
+11. להעביר לקובץ sln
