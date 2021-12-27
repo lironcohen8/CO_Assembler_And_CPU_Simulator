@@ -235,7 +235,7 @@ static void pass_over_file(int pass_num, FILE* asm_program ,FILE* output_file){
 
     while (fgets(line, MAX_LINE_LENGTH, asm_program) != NULL){
         clear_leading_white_spaces(&line); 
-        if ((line[0] != '\n') && (is_line_comment(line) == 0)){ /*If the line is empty or just a comment we skip it*/
+        if ((line[0] != '\0') && (is_line_comment(line) == 0)){ /*If the line is empty or just a comment we skip it*/
             colon_index = line_has_label(line); /*If line starts with label then returns ':' index else -1*/
             if (pass_num == 1 && colon_index!=-1){
                 line[colon_index] = '\0'; /*Gets only the label itself*/

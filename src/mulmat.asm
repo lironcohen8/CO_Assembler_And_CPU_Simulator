@@ -1,3 +1,5 @@
+
+
 .word 0x100 3
 .word 0x101 23
 .word 0x102 7
@@ -28,11 +30,10 @@
 .word 0x11B 12
 .word 0x11C 13
 .word 0x11D 14
-.word 0x11E 15
-.word 0x11F 16
+.word 0x11e 15
+.word 0x11f 16
 
-Main:	
-	add $s0, $zero, $zero, $imm1, 0x100, 0	# s0 set for the address of first value in mat A
+Main:	add $s0, $zero, $zero, $imm1, 0X100, 0	# s0 set for the address of first value in mat A
 	add $s1, $zero, $zero, $imm1, 0x110, 0	# s1 set for the address of first value in mat B 
 	add $s2, $zero, $zero, $imm1, 0x120, 0	# s2 set for the address of first value in mat C 
 	add $t0, $zero, $zero, $zero, 0, 0		
