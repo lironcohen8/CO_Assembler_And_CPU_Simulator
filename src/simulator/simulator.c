@@ -317,9 +317,7 @@ static void update_irq2() {
         g_io_regs[irq2status] = True;
         fscanf(g_irq2in_file, "%d\n", &g_next_irq2);
     }
-    else {
-        g_io_regs[irq2status] = False;
-    }
+    /*Interupt handler is responsible for setting the status back to false*/
 }
 
 static void parse_line_to_cmd(char* line, asm_cmd_t* cmd) {
@@ -386,10 +384,8 @@ static void update_timer() {
             g_io_regs[irq0status] = True;
             /* reset timer */
             g_io_regs[timercurrent] = 0;
-        } else {
-            /* Timer is enabled but it's not time for interrupt yet */
-            g_io_regs[irq0status] = False;
         }
+        /*Interupt handler is responsible for setting the status back to false*/
     }
 }
 
