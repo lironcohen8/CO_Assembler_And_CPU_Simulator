@@ -1,8 +1,8 @@
-1. https://moodle.tau.ac.il/mod/forum/discuss.php?d=33373
-2. https://moodle.tau.ac.il/mod/forum/discuss.php?d=34824
-3. https://moodle.tau.ac.il/mod/forum/discuss.php?d=37670
+1. https://moodle.tau.ac.il/mod/forum/discuss.php?d=33373 diskbuffer
+2. https://moodle.tau.ac.il/mod/forum/discuss.php?d=34824 הגשה
+3. https://moodle.tau.ac.il/mod/forum/discuss.php?d=37670 irqenable
 4. https://moodle.tau.ac.il/mod/forum/discuss.php?d=43485 לבדוק שהקבצים נפתוח ואלי גם שמאלוקים לא נכשלו
-5. https://moodle.tau.ac.il/mod/forum/discuss.php?d=38123
+5. https://moodle.tau.ac.il/mod/forum/discuss.php?d=38123 case sensitive labels
 6. https://moodle.tau.ac.il/mod/forum/discuss.php?d=42546 יחסית פירוט של גדי על ההגשה
 7. https://moodle.tau.ac.il/mod/forum/discuss.php?d=42897 הוספת טיפול בשגיאות בסימולטור אבל לא באסמבלר
 8. לעבור על התיעוד ולהעביר לpdf
