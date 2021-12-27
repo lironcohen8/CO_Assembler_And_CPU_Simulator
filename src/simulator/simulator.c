@@ -247,11 +247,11 @@ static void lw_cmd(cpu_reg_e rd, cpu_reg_e rs, cpu_reg_e rt, cpu_reg_e rm) {
     if (rd == $IMM1 || rd == $IMM2 || rd == $ZERO) {
         return;
     }
-    g_cpu_regs[rd] = g_dmem[g_cpu_regs[rs] + g_cpu_regs[rt]] + g_cpu_regs[rm];
+    g_cpu_regs[rd] = g_dmem[(g_cpu_regs[rs] + g_cpu_regs[rt]) % DATA_MEMORY_SIZE] + g_cpu_regs[rm];
 }
 
 static void sw_cmd(cpu_reg_e rd, cpu_reg_e rs, cpu_reg_e rt, cpu_reg_e rm) {
-    g_dmem[g_cpu_regs[rs] + g_cpu_regs[rt]] = g_cpu_regs[rm] + g_cpu_regs[rd];
+    g_dmem[(g_cpu_regs[rs] + g_cpu_regs[rt]) % DATA_MEMORY_SIZE] = g_cpu_regs[rm] + g_cpu_regs[rd];
     if (g_cpu_regs[rm] + g_cpu_regs[rd] != 0) {
         g_max_memory_index = MAX(g_max_memory_index, g_cpu_regs[rs] + g_cpu_regs[rt]);
     }
