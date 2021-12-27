@@ -11,4 +11,5 @@ EXIT:
     halt $zero, $zero, $zero, $zero, 0, 0		# End	
 L3:
     add $s1, $s1, $zero, $imm1, 1, 0            # count interrupt
+    out $zero, $zero, $imm2, $zero, 0, 3		# clear irq0 status
     reti $zero, $zero, $zero, $zero, 0, 0		# return from interrupt
