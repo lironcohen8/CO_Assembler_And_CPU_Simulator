@@ -1,6 +1,7 @@
 1. https://moodle.tau.ac.il/mod/forum/discuss.php?d=33373 diskbuffer
 2. https://moodle.tau.ac.il/mod/forum/discuss.php?d=34824 הגשה
 3. https://moodle.tau.ac.il/mod/forum/discuss.php?d=42546 יחסית פירוט של גדי על ההגשה
-4. לעבור על התיעוד ולהעביר לpdf
-5. לעבור שוב על המטלה וקבצי הפלט ולראות שלא פספסנו כלום
-6. להעביר לקובץ sln
+4. בדיקות שפיות
+5. לעבור על התיעוד ולהעביר לpdf
+6. לעבור שוב על המטלה וקבצי הפלט ולראות שלא פספסנו כלום
+7. להעביר לקובץ sln
