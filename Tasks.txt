@@ -1,4 +1,3 @@
-* לוודא שמחזור השעון באמת ציקלי, לשנות אותו לuint
 *https://moodle.tau.ac.il/mod/forum/discuss.php?d=33373
 *https://moodle.tau.ac.il/mod/forum/discuss.php?d=34824
 *https://moodle.tau.ac.il/mod/forum/discuss.php?d=28522

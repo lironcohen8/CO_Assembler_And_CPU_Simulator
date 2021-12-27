@@ -57,8 +57,8 @@ LOOP:
 	add $t2, $zero, $zero, $zero, 0, 0
 	
 CALC:	
-	bgt $zero, $s0, $imm1, $imm2, 0x10F, COND	# If we finished (If this is true the second check must also be true)
-	bgt $zero, $s1, $imm1, $imm2, 0x11F, COND
+	bgt $zero, $s0, $imm1, $imm2, 0x10F, COND	# If we finished 
+	bgt $zero, $s1, $imm1, $imm2, 0x11F, COND	# If we finished
 	
 	lw $t0, $s0, $zero, $zero, 0, 0			# Get the current val from A
 	lw $t1, $s1, $zero, $zero, 0, 0			# Get the current val from B
