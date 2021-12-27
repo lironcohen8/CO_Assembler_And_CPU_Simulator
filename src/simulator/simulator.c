@@ -19,6 +19,7 @@ static FILE* g_leds_file; /* leds file */
 static FILE* g_7segment_file; /* 7 segment file */
 static FILE* g_irq2in_file; /* Irq2 file */
 int g_max_memory_index; /* Holds the max non empty index in data mem array */
+static unsigned long long g_cycles = 0;
 
 static const char *g_io_regs_arr[] = {"irq0enable",
                                       "irq1enable",
@@ -68,15 +69,15 @@ static void out_cmd(cpu_reg_e, cpu_reg_e, cpu_reg_e, cpu_reg_e);
 static void halt_cmd(cpu_reg_e, cpu_reg_e, cpu_reg_e, cpu_reg_e);
 
 static void update_hw_reg_trace_file(char *type, int io_reg_index, int data) {
-    fprintf(g_io_reg_trace_file, "%d %s %s %08x\n" ,g_io_regs[clks], type, g_io_regs_arr[io_reg_index], data);
+    fprintf(g_io_reg_trace_file, "%lld %s %s %08x\n" ,g_cycles, type, g_io_regs_arr[io_reg_index], data);
 }
 
 static void update_leds_file() {
-    fprintf(g_leds_file, "%d %08x\n", g_io_regs[clks], g_io_regs[leds]);
+    fprintf(g_leds_file, "%lld %08x\n", g_cycles, g_io_regs[leds]);
 }
 
 static void update_7segment_file() {
-    fprintf(g_7segment_file, "%d %08x\n", g_io_regs[clks], g_io_regs[display7seg]);
+    fprintf(g_7segment_file, "%lld %08x\n", g_cycles, g_io_regs[display7seg]);
 }
 
 /* Array of function pointers used to call the right operation 
@@ -312,7 +313,7 @@ static int is_irq() {
 }
 
 static void update_irq2() {
-    if (g_io_regs[clks] == g_next_irq2) {
+    if (g_cycles == g_next_irq2) {
         g_io_regs[irq2status] = True;
         fscanf(g_irq2in_file, "%d\n", &g_next_irq2);
     }
@@ -468,6 +469,7 @@ static void exec_instructions(FILE* output_trace_file) {
         update_timer();  /* Update timer */
         update_irq2(); /* Updates value of next interrupt time if needed */
         g_io_regs[clks]++; /* Updates cycle clock */
+        g_cycles++; /* Updates cycles counter for logging */
         /* If the command is not branch or jump than advance PC */
         if (!is_jump_or_branch(curr_cmd->opcode)) {
             g_pc++;
@@ -495,7 +497,7 @@ static void write_regs_file(char const *file_name) {
 
 static void write_cycles_file(char const *file_name) {
     FILE* output_cycles_file = fopen(file_name, "w");
-    fprintf(output_cycles_file, "%d", g_io_regs[clks]);
+    fprintf(output_cycles_file, "%lld", g_cycles);
     fclose(output_cycles_file);
 }
 
