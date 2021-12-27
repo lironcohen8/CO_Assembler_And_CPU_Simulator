@@ -155,7 +155,8 @@ static void sll_cmd(cpu_reg_e rd, cpu_reg_e rs, cpu_reg_e rt, cpu_reg_e rm) {
     if (rd == $IMM1 || rd == $IMM2 || rd == $ZERO) {
         return;
     }
-    g_cpu_regs[rd] = g_cpu_regs[rs] << g_cpu_regs[rt];
+    /* Shift amount must be non negative */
+    g_cpu_regs[rd] = g_cpu_regs[rs] << abs(g_cpu_regs[rt]);
 }
 
 static void sra_cmd(cpu_reg_e rd, cpu_reg_e rs, cpu_reg_e rt, cpu_reg_e rm) {
@@ -163,7 +164,7 @@ static void sra_cmd(cpu_reg_e rd, cpu_reg_e rs, cpu_reg_e rt, cpu_reg_e rm) {
         return;
     }
     /* Arithmetic shift with sign extension is done sutomaticly by C */
-    g_cpu_regs[rd] = g_cpu_regs[rs] >> g_cpu_regs[rt];
+    g_cpu_regs[rd] = g_cpu_regs[rs] >> abs(g_cpu_regs[rt]);
 }
 
 static void srl_cmd(cpu_reg_e rd, cpu_reg_e rs, cpu_reg_e rt, cpu_reg_e rm) {
