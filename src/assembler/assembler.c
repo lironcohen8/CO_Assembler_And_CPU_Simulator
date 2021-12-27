@@ -229,6 +229,10 @@ static int line_has_command(char* line){
 /* The main function used to pass over the input file */
 static void pass_over_file(int pass_num, FILE* asm_program ,FILE* output_file){
     char* line = (char*)malloc(MAX_LINE_LENGTH);
+    if (line==NULL){
+        printf("Error - malloc failed");
+        exit(0);
+    }
     char* base_line_ptr = line;
     char* tmp_label_str = NULL;
     int colon_index;
@@ -240,6 +244,10 @@ static void pass_over_file(int pass_num, FILE* asm_program ,FILE* output_file){
             if (pass_num == 1 && colon_index!=-1){
                 line[colon_index] = '\0'; /*Gets only the label itself*/
                 tmp_label_str = (char *)malloc(colon_index + 1);
+                if (tmp_label_str==NULL){
+                    printf("Error - malloc failed");
+                    exit(0);
+                }
                 strcpy(tmp_label_str, line);
 
                 label_t tmp_label = {

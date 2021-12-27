@@ -173,7 +173,7 @@ static void srl_cmd(cpu_reg_e rd, cpu_reg_e rs, cpu_reg_e rt, cpu_reg_e rm) {
     }
     /* Casting as unsigned should perform logical shift
     (adding zeros in MSB's) */
-    g_cpu_regs[rd] = (unsigned) g_cpu_regs[rs] >> g_cpu_regs[rt];
+    g_cpu_regs[rd] = (unsigned) g_cpu_regs[rs] >> abs(g_cpu_regs[rt]);
 }
 
 static void beq_cmd(cpu_reg_e rd, cpu_reg_e rs, cpu_reg_e rt, cpu_reg_e rm) {
@@ -237,6 +237,9 @@ static void bge_cmd(cpu_reg_e rd, cpu_reg_e rs, cpu_reg_e rt, cpu_reg_e rm) {
 }
 
 static void jal_cmd(cpu_reg_e rd, cpu_reg_e rs, cpu_reg_e rt, cpu_reg_e rm) {
+    if (rd == $IMM1 || rd == $IMM2 || rd == $ZERO) {
+        return;
+    }
     /* Save next command address */
     g_cpu_regs[rd] = g_pc + 1;
     /* Jump */
@@ -286,6 +289,17 @@ static void out_cmd(cpu_reg_e rd, cpu_reg_e rs, cpu_reg_e rt, cpu_reg_e rm) {
 
 static void halt_cmd(cpu_reg_e rd, cpu_reg_e rs, cpu_reg_e rt, cpu_reg_e rm) {
     g_is_running = False;
+}
+
+static FILE* open_and_validate_file(char const* file_name, char const* perms){
+    FILE* file = fopen(file_name,perms);
+    if (file==NULL){
+        printf("Error opening file %s\n",file_name);
+        exit(0);
+    }
+    else{
+        return file;
+    }
 }
 
 static int sign_extension_imm(int imm) {
@@ -438,7 +452,7 @@ static void load_data_memory(FILE* data_input_file) {
 }
 
 static void load_disk_file(char const *file_name) {
-    FILE* diskin_file = fopen(file_name, "r");
+    FILE* diskin_file = open_and_validate_file(file_name, "r");
     char line_buffer[DATA_LINE_LEN + 2];
     int line_count = 0;
     /* stops when either (n-1) characters are read, or /n is read
@@ -447,6 +461,7 @@ static void load_disk_file(char const *file_name) {
         sscanf(line_buffer, "%X", &g_disk.data[line_count / DISK_SECTOR_SIZE][line_count % DISK_SECTOR_SIZE]);
         line_count++;
     }
+    fclose(diskin_file);
 }
 
 static void exec_instructions(FILE* output_trace_file) {
@@ -476,7 +491,7 @@ static void exec_instructions(FILE* output_trace_file) {
 
 static void write_memory_file(char const *file_name) {
     /* Writes the memory data file */
-    FILE* output_memory_file = fopen(file_name, "w");
+    FILE* output_memory_file = open_and_validate_file(file_name, "w");
     for (int i=0; i<=g_max_memory_index; i++){
         fprintf(output_memory_file,"%08X\n",g_dmem[i]);
     }
@@ -485,22 +500,22 @@ static void write_memory_file(char const *file_name) {
 
 static void write_regs_file(char const *file_name) {
     /* Writes the regs file */
-    FILE* output_cycles_file = fopen(file_name, "w");
+    FILE* output_regs_file = open_and_validate_file(file_name, "w");
     for (int i=3; i<CPU_REGS_NUM; i++){
-        fprintf(output_cycles_file,"%08X\n",g_cpu_regs[i]);
+        fprintf(output_regs_file,"%08X\n",g_cpu_regs[i]);
     }
-    fclose(output_cycles_file);
+    fclose(output_regs_file);
 }
 
 static void write_cycles_file(char const *file_name) {
-    FILE* output_cycles_file = fopen(file_name, "w");
+    FILE* output_cycles_file = open_and_validate_file(file_name, "w");
     fprintf(output_cycles_file, "%lld", g_cycles);
     fclose(output_cycles_file);
 }
 
 static void write_disk_file(char const *file_name) {
     /* Writes the disk data file */
-    FILE* output_disk_file = fopen(file_name, "w");
+    FILE* output_disk_file = open_and_validate_file(file_name, "w");
     for (int i=0; i<DISK_SECTOR_NUM; i++){
         for (int j=0; j<DISK_SECTOR_SIZE; j++){
             fprintf(output_disk_file,"%08X\n",(g_disk.data)[i][j]);
@@ -511,27 +526,27 @@ static void write_disk_file(char const *file_name) {
 
 static void write_monitor_files(char const *file_txt_name, char const *file_yuv_name) {
     /* Writes the monitor data file */
-    FILE* output_monitor_data_file = fopen(file_txt_name, "w");
+    FILE* output_monitor_data_file = open_and_validate_file(file_txt_name, "w");
     for (int i=0; i<MONITOR_DIM*MONITOR_DIM; i++) {
         fprintf(output_monitor_data_file,"%02X\n",(g_monitor)[i]);
     }
     fclose(output_monitor_data_file);
 
     /* Writes the monitor binary file */
-    FILE* output_monitor_binary_file = fopen(file_yuv_name, "wb");
+    FILE* output_monitor_binary_file = open_and_validate_file(file_yuv_name, "wb");
     fwrite(g_monitor, sizeof(char), MONITOR_DIM*MONITOR_DIM, output_monitor_binary_file);
     fclose(output_monitor_binary_file);
 }
 
 int main(int argc, char const *argv[])
 {
-    FILE* input_cmd_file = fopen(argv[1], "r"); /* imemin.txt */
-    FILE* input_data_file = fopen(argv[2], "r"); /* dmemin.txt */
-    FILE* output_trace_file = fopen(argv[7], "w"); /* trace.txt */
-    g_io_reg_trace_file = fopen(argv[8], "w"); /* IO reg trace file */
-    g_leds_file = fopen(argv[10], "w"); /* leds file */
-    g_7segment_file = fopen(argv[11], "w"); /* 7segment file */   
-    g_irq2in_file = fopen(argv[4], "r"); /* Irq2 file */
+    FILE* input_cmd_file = open_and_validate_file(argv[1], "r"); /* imemin.txt */
+    FILE* input_data_file = open_and_validate_file(argv[2], "r"); /* dmemin.txt */
+    FILE* output_trace_file = open_and_validate_file(argv[7], "w"); /* trace.txt */
+    g_io_reg_trace_file = open_and_validate_file(argv[8], "w"); /* IO reg trace file */
+    g_leds_file = open_and_validate_file(argv[10], "w"); /* leds file */
+    g_7segment_file = open_and_validate_file(argv[11], "w"); /* 7segment file */   
+    g_irq2in_file = open_and_validate_file(argv[4], "r"); /* Irq2 file */
     fscanf(g_irq2in_file, "%d\n", &g_next_irq2);
 
     load_instructions(input_cmd_file); /* Load instructions and store them in g_cmd_arr */
@@ -544,6 +559,9 @@ int main(int argc, char const *argv[])
     write_disk_file(argv[12]); /* Write to diskout file */
     write_monitor_files(argv[13], argv[14]); /* Write monitor files */
 
+    fclose(input_cmd_file);
+    fclose(input_data_file);
+    fclose(output_trace_file);
     fclose(g_io_reg_trace_file);
     fclose(g_leds_file);
     fclose(g_7segment_file);
