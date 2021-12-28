@@ -420,7 +420,9 @@ static void update_disk() {
         if (g_io_regs[diskcmd] == 1) {
             /* Read command
             Copy from disk to memory */
-            memcpy(&g_dmem[buffer_addr], g_disk.data[sector], DISK_SECTOR_SIZE);
+            if ((DATA_MEMORY_SIZE-buffer_addr+1>=0)&&(DATA_MEMORY_SIZE-buffer_addr+1>=DISK_SECTOR_SIZE/4)){
+                memcpy(&g_dmem[buffer_addr], g_disk.data[sector], DISK_SECTOR_SIZE);
+            }
         } else {
             /* Assuming legal command => Here is write command 
             Copy from memory to disk */
