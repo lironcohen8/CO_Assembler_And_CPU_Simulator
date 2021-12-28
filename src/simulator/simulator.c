@@ -412,21 +412,35 @@ static void update_monitor() {
 }
 
 static void update_disk() {
-    if (g_io_regs[diskstatus] == False && g_io_regs[diskcmd] != 0) {
-        /* Mark disk as busy */
+    if (g_io_regs[diskstatus] == False && (g_io_regs[diskcmd] == 1 || g_io_regs[diskcmd] == 2)) {
+        /* Disk isn't busy and a command is waiting :
+        get sector number and bufer address */
         unsigned int sector = g_io_regs[disksector];
         unsigned int buffer_addr = g_io_regs[diskbuffer];
+        /* Mark disk as busy */
         g_io_regs[diskstatus] = True;
-        if (g_io_regs[diskcmd] == 1) {
-            /* Read command
-            Copy from disk to memory */
-            if ((DATA_MEMORY_SIZE-buffer_addr+1>=0)&&(DATA_MEMORY_SIZE-buffer_addr+1>=DISK_SECTOR_SIZE/4)){
+        if ((buffer_addr >= DATA_MEMORY_SIZE) ||
+            (DATA_MEMORY_SIZE - buffer_addr < DISK_SECTOR_SIZE/4) ||
+            (sector >= DISK_SECTOR_NUM)) {
+                /* If one of this conditions occurs, this is an ileagal action :
+                    1. buffer address is not in range
+                    2. buffer address is too close to end of memory and can't hold a sector from disk
+                    3. sector num is out of range */
+                return;
+        }
+        switch (g_io_regs[diskcmd]) {
+            case 1:
+                /* Read command
+                Copy from disk to memory */
                 memcpy(&g_dmem[buffer_addr], g_disk.data[sector], DISK_SECTOR_SIZE);
-            }
-        } else {
-            /* Assuming legal command => Here is write command 
-            Copy from memory to disk */
-            memcpy(g_disk.data[sector], &g_dmem[buffer_addr], DISK_SECTOR_SIZE);
+                break;
+            case 2:
+                /* Write command
+                Copy from memory to disk */
+                memcpy(g_disk.data[sector], &g_dmem[buffer_addr], DISK_SECTOR_SIZE);
+                break;
+            default:
+                break;
         }
     } else {
         if (g_io_regs[diskstatus] == True) {
