@@ -1,7 +1,6 @@
-1. https://moodle.tau.ac.il/mod/forum/discuss.php?d=33373 diskbuffer
-2. https://moodle.tau.ac.il/mod/forum/discuss.php?d=34824 הגשה
-3. https://moodle.tau.ac.il/mod/forum/discuss.php?d=42546 יחסית פירוט של גדי על ההגשה
-4. בדיקות שפיות
-5. לעבור על התיעוד ולהעביר לpdf
-6. לעבור שוב על המטלה וקבצי הפלט ולראות שלא פספסנו כלום
-7. להעביר לקובץ sln
+1. Submission: 
+	https://moodle.tau.ac.il/mod/forum/discuss.php?d=42546 
+	https://moodle.tau.ac.il/mod/forum/discuss.php?d=34824
+2. Validate documentation and export to PDF
+3. Read assignment and make sure we are ok
+4. After parsing validate opcode and reg numbers
