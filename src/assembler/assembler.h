@@ -6,7 +6,7 @@
 #define IO_REGS_NUM      (23)
 
 typedef struct {
-    char * label;
+    char label[MAX_LABEL_LENGTH];
     int cmd_index;
 } label_t;
 

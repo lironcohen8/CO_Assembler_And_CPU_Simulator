@@ -235,7 +235,7 @@ static void pass_over_file(int pass_num, FILE* asm_program ,FILE* output_file){
         exit(0);
     }
     char* base_line_ptr = line;
-    char* tmp_label_str = NULL;
+    //char tmp_label_str[MAX_LABEL_LENGTH];
     int colon_index;
 
     while (fgets(line, MAX_LINE_LENGTH, asm_program) != NULL){
@@ -244,16 +244,19 @@ static void pass_over_file(int pass_num, FILE* asm_program ,FILE* output_file){
             colon_index = line_has_label(line); /*If line starts with label then returns ':' index else -1*/
             if (pass_num == 1 && colon_index!=-1){
                 line[colon_index] = '\0'; /*Gets only the label itself*/
-                tmp_label_str = (char *)malloc(colon_index + 1);
-                if (tmp_label_str==NULL){
-                    printf("Error - malloc failed");
-                    exit(0);
-                }
-                strcpy_s(tmp_label_str, MAX_LINE_LENGTH, line);
+                //tmp_label_str = (char *)malloc(colon_index + 1, 1);
+                //if (tmp_label_str==NULL){
+                   // printf("Error - malloc failed");
+                  //  exit(0);
+               // }
+                //strcpy_s(tmp_label_str, MAX_LINE_LENGTH, line);
 
-                label_t tmp_label = {
-                    .label = tmp_label_str,
-                    .cmd_index = g_command_counter}; 
+                //label_t tmp_label = {
+                   // .label = tmp_label_str,
+                  //  .cmd_index = g_command_counter }; 
+                label_t tmp_label;
+                tmp_label.cmd_index = g_command_counter;
+                strcpy_s(tmp_label.label, MAX_LABEL_LENGTH, line);
                 
                 g_labels_arr[g_label_count++] = tmp_label;
             }
@@ -284,17 +287,17 @@ int main(int argc, char const *argv[]) {
     FILE *asm_program, *output_cmd_file, *output_data_file;
     fopen_s(&asm_program, argv[1], "r");
     if (asm_program == NULL) {
-        perror("Could not open assembly program file");
+        perror("Could not open assembly program file\n");
         exit(0);
     }
-    fopen_s(&output_cmd_file, OUTPUT_INSTR_FILE_NAME, "w");
+    fopen_s(&output_cmd_file, argv[2], "w");
     if (output_cmd_file == NULL) {
-        perror("Could not open output cmd file");
+        perror("Could not open output cmd file\n");
         exit(0);
     }
-    fopen_s(&output_data_file, OUTPUT_DATA_FILE_NAME, "w");
+    fopen_s(&output_data_file, argv[3], "w");
     if (output_data_file == NULL) {
-        perror("Could not open output data file");
+        perror("Could not open output data file\n");
         exit(0);
     }
 
