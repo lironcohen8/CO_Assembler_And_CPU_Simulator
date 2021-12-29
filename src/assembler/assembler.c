@@ -99,6 +99,7 @@ static int get_label_num(char *label)
             return g_labels_arr[i].cmd_index;
         }
     }
+    return -1;
 }
 
 static int does_line_contain_label(char *line) {
@@ -127,7 +128,7 @@ static void decode_cmds_to_output_file(FILE *output_file, char *line)
 {
     /*This function is used to parse the line*/
     char opcode[MAX_OPCODE_LENGTH], rd[MAX_REG_LENGTH], rs[MAX_REG_LENGTH], rt[MAX_REG_LENGTH], rm[MAX_REG_LENGTH], imm1[32], imm2[32];
-    sscanf(line, " %[^ $] $%[^,], $%[^,], $%[^,], $%[^,], %[^,], %s ",  opcode, rd, rs, rt, rm, imm1, imm2);
+    sscanf_s(line, " %[^ $] $%[^,], $%[^,], $%[^,], $%[^,], %[^,], %s ",  opcode, MAX_OPCODE_LENGTH, rd, MAX_REG_LENGTH, rs, MAX_REG_LENGTH, rt, MAX_REG_LENGTH, rm, MAX_REG_LENGTH, imm1, 32, imm2, 32);
 
     int opcode_d, rd_d, rs_d, rt_d, rm_d, imm1_d, imm2_d;
     /*Get the opcode and registers numbers from their dictionaries*/
@@ -167,7 +168,7 @@ static void add_data_to_memory(char* line){
     /*Used for a '.word' command - will store the second number at the first number index in 
     the g_data_memory array*/
     int address, value;
-    sscanf(line, ".word %i %i", &address, &value); /*%i deducts if it is int or hexa*/
+    sscanf_s(line, ".word %i %i", &address, &value); /*%i deducts if it is int or hexa*/
     
     g_data_memory[address] = value;
     g_max_memory_index = MAX(g_max_memory_index,address); /*Updates the max non empty index at the data_memory array*/
@@ -221,7 +222,7 @@ static int line_has_command(char* line){
     /*Checks if a line has both a label and a command, at this point we already skipped the label
     and trimmed the leading whitespaces*/
     char first_word[MAX_OPCODE_LENGTH];
-    sscanf(line,"%s",first_word);
+    sscanf_s(line,"%s",first_word, MAX_OPCODE_LENGTH);
     
     return get_opcode_num(first_word)>-1; /*If we get a positive value then the first word is a valid opcode*/
 }
@@ -248,7 +249,7 @@ static void pass_over_file(int pass_num, FILE* asm_program ,FILE* output_file){
                     printf("Error - malloc failed");
                     exit(0);
                 }
-                strcpy(tmp_label_str, line);
+                strcpy_s(tmp_label_str, MAX_LINE_LENGTH, line);
 
                 label_t tmp_label = {
                     .label = tmp_label_str,
@@ -280,9 +281,22 @@ static void pass_over_file(int pass_num, FILE* asm_program ,FILE* output_file){
 }
 
 int main(int argc, char const *argv[]) {
-    FILE* asm_program = fopen(argv[1], "r");
-    FILE* output_cmd_file = fopen(OUTPUT_INSTR_FILE_NAME, "w");
-    FILE* output_data_file = fopen(OUTPUT_DATA_FILE_NAME, "w");
+    FILE *asm_program, *output_cmd_file, *output_data_file;
+    fopen_s(&asm_program, argv[1], "r");
+    if (asm_program == NULL) {
+        perror("Could not open assembly program file");
+        exit(0);
+    }
+    fopen_s(&output_cmd_file, OUTPUT_INSTR_FILE_NAME, "w");
+    if (output_cmd_file == NULL) {
+        perror("Could not open output cmd file");
+        exit(0);
+    }
+    fopen_s(&output_data_file, OUTPUT_DATA_FILE_NAME, "w");
+    if (output_data_file == NULL) {
+        perror("Could not open output data file");
+        exit(0);
+    }
 
     pass_over_file(1, asm_program, output_cmd_file);
     rewind(asm_program);

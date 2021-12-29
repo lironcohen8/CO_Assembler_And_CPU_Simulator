@@ -254,9 +254,11 @@ static void lw_cmd(cpu_reg_e rd, cpu_reg_e rs, cpu_reg_e rt, cpu_reg_e rm) {
 }
 
 static void sw_cmd(cpu_reg_e rd, cpu_reg_e rs, cpu_reg_e rt, cpu_reg_e rm) {
+    int memory_address;
     g_dmem[(g_cpu_regs[rs] + g_cpu_regs[rt]) % DATA_MEMORY_SIZE] = g_cpu_regs[rm] + g_cpu_regs[rd];
     if (g_cpu_regs[rm] + g_cpu_regs[rd] != 0) {
-        g_max_memory_index = MAX(g_max_memory_index, g_cpu_regs[rs] + g_cpu_regs[rt]);
+        memory_address = g_cpu_regs[rs] + g_cpu_regs[rt];
+        g_max_memory_index = MAX(g_max_memory_index, memory_address);
     }
 }
 
@@ -292,7 +294,8 @@ static void halt_cmd(cpu_reg_e rd, cpu_reg_e rs, cpu_reg_e rt, cpu_reg_e rm) {
 }
 
 static FILE* open_and_validate_file(char const* file_name, char const* perms){
-    FILE* file = fopen(file_name,perms);
+    FILE* file;
+    fopen_s(&file, file_name, perms);
     if (file==NULL){
         printf("Error opening file %s\n",file_name);
         exit(0);
@@ -330,7 +333,7 @@ static int is_irq() {
 static void update_irq2() {
     if (g_cycles == g_next_irq2) {
         g_io_regs[irq2status] = True;
-        fscanf(g_irq2in_file, "%d\n", &g_next_irq2);
+        fscanf_s(g_irq2in_file, "%d\n", &g_next_irq2);
     }
     /*Interupt handler is responsible for setting the status back to false*/
 }
@@ -338,7 +341,7 @@ static void update_irq2() {
 static void parse_line_to_cmd(char* line, asm_cmd_t* cmd) {
     /* Each command is 48 bits so 64 bits are required */
     unsigned long long raw;
-    sscanf(line, "%llX", &raw);
+    sscanf_s(line, "%llX", &raw);
 
     /* construct the command object */
     cmd->imm2 = raw & 0xFFF;
@@ -462,7 +465,7 @@ static void load_data_memory(FILE* data_input_file) {
     /* stops when either (n-1) characters are read, or /n is read
     We want to read the /n char so it won't get in to the next line */
     while (fgets(line_buffer, DATA_LINE_LEN + 2, data_input_file) != NULL) {
-        sscanf(line_buffer, "%X", &g_dmem[line_count++]);
+        sscanf_s(line_buffer, "%X", &g_dmem[line_count++]);
     }
     g_max_memory_index = line_count-1;
 }
@@ -474,7 +477,7 @@ static void load_disk_file(char const *file_name) {
     /* stops when either (n-1) characters are read, or /n is read
     We want to read the /n char so it won't get in to the next line */
     while (fgets(line_buffer, DATA_LINE_LEN + 2, diskin_file) != NULL) {
-        sscanf(line_buffer, "%X", &g_disk.data[line_count / DISK_SECTOR_SIZE][line_count % DISK_SECTOR_SIZE]);
+        sscanf_s(line_buffer, "%hhX", &g_disk.data[line_count / DISK_SECTOR_SIZE][line_count % DISK_SECTOR_SIZE]);
         line_count++;
     }
     fclose(diskin_file);
@@ -563,7 +566,7 @@ int main(int argc, char const *argv[])
     g_leds_file = open_and_validate_file(argv[10], "w"); /* leds file */
     g_7segment_file = open_and_validate_file(argv[11], "w"); /* 7segment file */   
     g_irq2in_file = open_and_validate_file(argv[4], "r"); /* Irq2 file */
-    fscanf(g_irq2in_file, "%d\n", &g_next_irq2);
+    fscanf_s(g_irq2in_file, "%d\n", &g_next_irq2);
 
     load_instructions(input_cmd_file); /* Load instructions and store them in g_cmd_arr */
     load_data_memory(input_data_file); /* Load data memory and store in g_dmem */
