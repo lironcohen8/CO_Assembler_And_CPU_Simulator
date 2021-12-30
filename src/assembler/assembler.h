@@ -3,7 +3,12 @@
 #define MAX_LINE_LENGTH  (500)
 #define MAX_LABEL_LENGTH (50)
 #define CPU_REGS_NUM     (16)
-#define IO_REGS_NUM      (23)
+
+#define OPCODES_NUM             (22)
+#define MAX_OPCODE_LENGTH       (5) /* length in chars 'halt' is 4 chars */
+#define MAX_REG_LENGTH          (5) /* length in chars 'imm1' is 4 chars */
+#define MAX_ASSEMBLY_LINES      (4096)
+#define DATA_MEMORY_SIZE        (4096)
 
 typedef struct {
     char label[MAX_LABEL_LENGTH];

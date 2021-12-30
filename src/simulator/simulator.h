@@ -67,13 +67,13 @@ typedef enum {
 } cpu_reg_e;
 
 typedef struct {
-    opcode_e opcode    ;
-    cpu_reg_e rd       ;
-    cpu_reg_e rs       ;
-    cpu_reg_e rt       ;
-    cpu_reg_e rm       ;
-    int imm1           ;
-    int imm2           ;
+    opcode_e opcode;
+    cpu_reg_e rd;
+    cpu_reg_e rs;
+    cpu_reg_e rt;
+    cpu_reg_e rm;
+    int imm1;
+    int imm2;
     unsigned long long raw_cmd;
 } asm_cmd_t;
 

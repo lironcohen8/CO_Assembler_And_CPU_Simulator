@@ -19,7 +19,7 @@ static FILE* g_leds_file; /* leds file */
 static FILE* g_7segment_file; /* 7 segment file */
 static FILE* g_irq2in_file; /* Irq2 file */
 int g_max_memory_index; /* Holds the max non empty index in data mem array */
-static unsigned long long g_cycles = 0;
+static unsigned long long g_cycles = 0; /* Usngined 64 bit for clock cycles counter */
 
 static const char *g_io_regs_arr[] = {"irq0enable",
                                       "irq1enable",
@@ -293,6 +293,7 @@ static void halt_cmd(cpu_reg_e rd, cpu_reg_e rs, cpu_reg_e rt, cpu_reg_e rm) {
     g_is_running = False;
 }
 
+/* File opening and validation used for all files */
 static FILE* open_and_validate_file(char const* file_name, char const* perms){
     FILE* file;
     fopen_s(&file, file_name, perms);
@@ -450,7 +451,7 @@ static void update_disk() {
         if ((buffer_addr >= DATA_MEMORY_SIZE) ||
             (DATA_MEMORY_SIZE - buffer_addr < DISK_SECTOR_SIZE/4) ||
             (sector >= DISK_SECTOR_NUM)) {
-                /* If one of this conditions occurs, this is an ileagal action :
+                /* If one of these conditions occurs, this is an ileagal action :
                     1. buffer address is not in range
                     2. buffer address is too close to end of memory and can't hold a sector from disk
                     3. sector num is out of range */
@@ -472,6 +473,7 @@ static void update_disk() {
         }
     } else {
         if (g_io_regs[diskstatus] == True) {
+            /* Disk is busy */
             g_disk.time_in_cmd++;
             if (g_disk.time_in_cmd == DISK_HANDLING_TIME) {
                 /* Finished operation */
@@ -520,7 +522,7 @@ static void exec_instructions(FILE* output_trace_file) {
         curr_cmd = &g_cmd_arr[g_pc]; /* Fetch current command to execute */
         update_trace_file(output_trace_file, curr_cmd); /* Update trace file before executing command */
         if (validate_opcode_and_regs(curr_cmd) == 0) {
-            exec_cmd(curr_cmd); /* Execute */
+            exec_cmd(curr_cmd); /* Execute only when the command is valid */
         }
         update_monitor(); /* Check for monitor updates */
         update_disk(); /* Check for disk updates */

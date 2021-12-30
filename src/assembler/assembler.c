@@ -5,14 +5,6 @@
 #include <ctype.h>
 #include <inttypes.h>
 
-#define OPCODES_NUM             (22)
-#define MAX_OPCODE_LENGTH       (5)
-#define MAX_REG_LENGTH          (5)
-#define CPU_REGS_NUM            (16)
-#define MAX_ASSEMBLY_LINES      (4096)
-#define DATA_MEMORY_SIZE        (4096)
-#define OUTPUT_INSTR_FILE_NAME  "imemin.txt"
-#define OUTPUT_DATA_FILE_NAME   "dmemin.txt"
 #define MAX(X, Y)               (((X) > (Y)) ? (X) : (Y))
 
 int g_max_memory_index = 0; /* Holds the max non empty index in the data array */
@@ -128,7 +120,14 @@ static void decode_cmds_to_output_file(FILE *output_file, char *line)
 {
     /*This function is used to parse the line*/
     char opcode[MAX_OPCODE_LENGTH], rd[MAX_REG_LENGTH], rs[MAX_REG_LENGTH], rt[MAX_REG_LENGTH], rm[MAX_REG_LENGTH], imm1[32], imm2[32];
-    sscanf_s(line, " %[^ $] $%[^,], $%[^,], $%[^,], $%[^,], %[^,], %s ",  opcode, MAX_OPCODE_LENGTH, rd, MAX_REG_LENGTH, rs, MAX_REG_LENGTH, rt, MAX_REG_LENGTH, rm, MAX_REG_LENGTH, imm1, 32, imm2, 32);
+    sscanf_s(line, " %[^ $] $%[^,], $%[^,], $%[^,], $%[^,], %[^,], %s ",  
+        opcode, MAX_OPCODE_LENGTH,
+        rd, MAX_REG_LENGTH,
+        rs, MAX_REG_LENGTH,
+        rt, MAX_REG_LENGTH, 
+        rm, MAX_REG_LENGTH,
+        imm1, 32,
+        imm2, 32);
 
     int opcode_d, rd_d, rs_d, rt_d, rm_d, imm1_d, imm2_d;
     /*Get the opcode and registers numbers from their dictionaries*/
@@ -270,6 +269,7 @@ static void pass_over_file(int pass_num, FILE* asm_program ,FILE* output_file){
         }
     }
     g_command_counter = 0;
+    free(line);
 }
 
 int main(int argc, char const *argv[]) {
