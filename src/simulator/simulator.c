@@ -338,6 +338,30 @@ static void update_irq2() {
     /*Interupt handler is responsible for setting the status back to false*/
 }
 
+int validate_opcode_and_regs(asm_cmd_t* cmd) {
+    if (cmd->opcode < 0 || cmd->opcode >= OPCODES_NUM) {
+        printf("Opcode is not valid. continuing to next instruction\n");
+        return -1;
+    }
+    if (cmd->rm < 0 || cmd->rm >= CPU_REGS_NUM) {
+        printf("Rm value is not valid. continuing to next instruction\n");
+        return -1;
+    }
+    if (cmd->rt < 0 || cmd->rt >= CPU_REGS_NUM) {
+        printf("Rt value is not valid. continuing to next instruction\n");
+        return -1;
+    }
+    if (cmd->rs < 0 || cmd->rs >= CPU_REGS_NUM) {
+        printf("Rs value is not valid. continuing to next instruction\n");
+        return -1;
+    }
+    if (cmd->rd < 0 || cmd->rd >= CPU_REGS_NUM) {
+        printf("Rd value is not valid. continuing to next instruction\n");
+        return -1;
+    }
+    return 0;
+}
+
 static void parse_line_to_cmd(char* line, asm_cmd_t* cmd) {
     /* Each command is 48 bits so 64 bits are required */
     unsigned long long raw;
@@ -352,6 +376,7 @@ static void parse_line_to_cmd(char* line, asm_cmd_t* cmd) {
     cmd->rd = (raw >> 36) & 0xF;
     cmd->opcode = (raw >> 40) & 0xFF;
     cmd->raw_cmd = raw;
+    validate_opcode_and_regs(cmd);
 }
 
 static void exec_cmd(asm_cmd_t* cmd) {
