@@ -521,11 +521,11 @@ static void exec_instructions(FILE* output_trace_file) {
         update_trace_file(output_trace_file, curr_cmd); /* Update trace file before executing command */
         if (validate_opcode_and_regs(curr_cmd) == 0) {
             exec_cmd(curr_cmd); /* Execute */
-            update_monitor(); /* Check for monitor updates */
-            update_disk(); /* Check for disk updates */
-            update_timer();  /* Update timer */
-            update_irq2(); /* Updates value of next interrupt time if needed */
         }
+        update_monitor(); /* Check for monitor updates */
+        update_disk(); /* Check for disk updates */
+        update_timer();  /* Update timer */
+        update_irq2(); /* Updates value of next interrupt time if needed */
         g_io_regs[clks]++; /* Updates cycle clock */
         g_cycles++; /* Updates cycles counter for logging */
         /* If the command is not branch or jump than advance PC */
