@@ -1,6 +1,5 @@
 1. Submission: 
 	https://moodle.tau.ac.il/mod/forum/discuss.php?d=42546 
 	https://moodle.tau.ac.il/mod/forum/discuss.php?d=34824
-2. Validate documentation and export to PDF
-3. Read assignment and make sure we are ok
-4. After parsing validate opcode and reg numbers
+2. Read assignment and make sure we are ok
+3. After parsing validate opcode and reg numbers
