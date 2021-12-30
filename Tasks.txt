@@ -2,4 +2,3 @@
 	https://moodle.tau.ac.il/mod/forum/discuss.php?d=42546 
 	https://moodle.tau.ac.il/mod/forum/discuss.php?d=34824
 2. Read assignment and make sure we are ok
-3. After parsing validate opcode and reg numbers
