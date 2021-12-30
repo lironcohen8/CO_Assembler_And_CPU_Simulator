@@ -287,17 +287,17 @@ int main(int argc, char const *argv[]) {
     FILE *asm_program, *output_cmd_file, *output_data_file;
     fopen_s(&asm_program, argv[1], "r");
     if (asm_program == NULL) {
-        perror("Could not open assembly program file\n");
+        printf("Could not open assembly program file\n");
         exit(0);
     }
     fopen_s(&output_cmd_file, argv[2], "w");
     if (output_cmd_file == NULL) {
-        perror("Could not open output cmd file\n");
+        printf("Could not open output cmd file\n");
         exit(0);
     }
     fopen_s(&output_data_file, argv[3], "w");
     if (output_data_file == NULL) {
-        perror("Could not open output data file\n");
+        printf("Could not open output data file\n");
         exit(0);
     }
 
