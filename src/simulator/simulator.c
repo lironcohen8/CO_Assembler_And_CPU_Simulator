@@ -338,7 +338,7 @@ static void update_irq2() {
     /*Interupt handler is responsible for setting the status back to false*/
 }
 
-int validate_opcode_and_regs(asm_cmd_t* cmd) {
+static int validate_opcode_and_regs(asm_cmd_t* cmd) {
     if (cmd->opcode < 0 || cmd->opcode >= OPCODES_NUM) {
         printf("Opcode is not valid. continuing to next instruction\n");
         return -1;
@@ -362,8 +362,9 @@ int validate_opcode_and_regs(asm_cmd_t* cmd) {
     return 0;
 }
 
-static void parse_line_to_cmd(char* line, asm_cmd_t* cmd) {
+static int parse_line_to_cmd(char* line, asm_cmd_t* cmd) {
     /* Each command is 48 bits so 64 bits are required */
+    int shouldExec = -1;
     unsigned long long raw;
     sscanf_s(line, "%llX", &raw);
 
@@ -376,7 +377,8 @@ static void parse_line_to_cmd(char* line, asm_cmd_t* cmd) {
     cmd->rd = (raw >> 36) & 0xF;
     cmd->opcode = (raw >> 40) & 0xFF;
     cmd->raw_cmd = raw;
-    validate_opcode_and_regs(cmd);
+    shouldExec = validate_opcode_and_regs(cmd);
+    return shouldExec;
 }
 
 static void exec_cmd(asm_cmd_t* cmd) {
@@ -392,7 +394,7 @@ static void load_instructions(FILE* instr_file) {
    /* stops when either (n-1) characters are read, or /n is read
    We want to read the /n char so it won't get in to the next line */
    while (fgets(line_buffer, INSTRUCTION_LINE_LEN + 2, instr_file) != NULL) {
-       parse_line_to_cmd(line_buffer, &curr_cmd);
+       if (parse_line_to_cmd(line_buffer, &curr_cmd) == 0) /*Valid commands*/
        g_cmd_arr[instructions_count++] = curr_cmd;
    }
 }
