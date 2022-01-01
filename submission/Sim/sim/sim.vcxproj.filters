@@ -15,12 +15,12 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\src\simulator\simulator.c">
+    <ClCompile Include="simulator.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\src\simulator\simulator.h">
+    <ClInclude Include="simulator.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
