@@ -269,6 +269,7 @@ static void pass_over_file(int pass_num, FILE* asm_program ,FILE* output_file){
         }
     }
     g_command_counter = 0;
+    line = base_line_ptr; /* Make sure we free what we malloced */
     free(line);
 }
 
