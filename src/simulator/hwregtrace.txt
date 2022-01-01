@@ -1,11 +1,3 @@
-0 WRITE irq0enable 00000001
-1 WRITE timermax 00000064
-2 WRITE irqhandler 00000009
-5 WRITE timerenable 00000001
-106 WRITE irq0status 00000000
-206 WRITE irq0status 00000000
-306 WRITE irq0status 00000000
-406 WRITE irq0status 00000000
-506 WRITE irq0status 00000000
-606 WRITE irq0status 00000000
-706 WRITE irq0status 00000000
+version https://git-lfs.github.com/spec/v1
+oid sha256:fcef5907c8d9c6de62d88d51d345232d28d52e2b99066dc7c6052975a3b2d515
+size 332
