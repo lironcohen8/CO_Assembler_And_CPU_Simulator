@@ -18,7 +18,7 @@ static FILE* g_io_reg_trace_file; /* IO reg trace file */
 static FILE* g_leds_file; /* leds file */
 static FILE* g_7segment_file; /* 7 segment file */
 static FILE* g_irq2in_file; /* Irq2 file */
-int g_max_memory_index; /* Holds the max non empty index in data mem array */
+static int g_max_memory_index; /* Holds the max non empty index in data mem array */
 static unsigned long long g_cycles = 0; /* Usngined 64 bit for clock cycles counter */
 
 static const char* g_io_regs_arr[] = { "irq0enable",
@@ -450,17 +450,21 @@ static void update_disk() {
     if (g_io_regs[diskstatus] == False && (g_io_regs[diskcmd] == 1 || g_io_regs[diskcmd] == 2)) {
         /* Disk isn't busy and a command is waiting :
         get sector number and bufer address */
-        unsigned int sector = g_io_regs[disksector];
-        unsigned int buffer_addr = g_io_regs[diskbuffer];
+        int sector = g_io_regs[disksector];
+        int buffer_addr = g_io_regs[diskbuffer];
         /* Mark disk as busy */
         g_io_regs[diskstatus] = True;
         if ((buffer_addr >= DATA_MEMORY_SIZE) ||
             (DATA_MEMORY_SIZE - buffer_addr < DISK_SECTOR_SIZE / 4) ||
-            (sector >= DISK_SECTOR_NUM)) {
+            (sector >= DISK_SECTOR_NUM) ||
+            (sector < 0) ||
+            (buffer_addr < 0)) {
             /* If one of these conditions occurs, this is an ileagal action :
                 1. buffer address is not in range
                 2. buffer address is too close to end of memory and can't hold a sector from disk
-                3. sector num is out of range */
+                3. sector num is out of range
+                4. sector num is negative
+                5. buffer addr is negative */
             return;
         }
         switch (g_io_regs[diskcmd]) {
@@ -468,6 +472,7 @@ static void update_disk() {
             /* Read command
             Copy from disk to memory */
             memcpy(&g_dmem[buffer_addr], g_disk.data[sector], DISK_SECTOR_SIZE);
+            g_max_memory_index = MAX(g_max_memory_index, buffer_addr + DISK_SECTOR_SIZE - 1);
             break;
         case 2:
             /* Write command

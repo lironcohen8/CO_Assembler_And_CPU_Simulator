@@ -1,10 +1,10 @@
 {
   "ExpandedNodes": [
     "",
-    "\\src\\assembler",
     "\\submission",
-    "\\submission\\Asm"
+    "\\submission\\sim",
+    "\\submission\\sim\\sim"
   ],
-  "SelectedNode": "\\submission\\Asm\\Asm.sln",
+  "SelectedNode": "\\submission\\sim\\sim\\simulator.c",
   "PreviewInSolutionExplorer": false
 }
