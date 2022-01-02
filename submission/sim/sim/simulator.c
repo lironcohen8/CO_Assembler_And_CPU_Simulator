@@ -564,7 +564,7 @@ static void write_regs_file(char const* file_name) {
 
 static void write_cycles_file(char const* file_name) {
     FILE* output_cycles_file = open_and_validate_file(file_name, "w");
-    fprintf(output_cycles_file, "%lld", g_cycles);
+    fprintf(output_cycles_file, "%lld\n", g_cycles);
     fclose(output_cycles_file);
 }
 
