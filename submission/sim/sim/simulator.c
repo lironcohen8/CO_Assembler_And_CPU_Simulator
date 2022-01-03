@@ -455,7 +455,7 @@ static void update_disk() {
         /* Mark disk as busy */
         g_io_regs[diskstatus] = True;
         if ((buffer_addr >= DATA_MEMORY_SIZE) ||
-            (DATA_MEMORY_SIZE - buffer_addr < DISK_SECTOR_SIZE / 4) ||
+            (DATA_MEMORY_SIZE - buffer_addr < DISK_SECTOR_SIZE_INT) ||
             (sector >= DISK_SECTOR_NUM) ||
             (sector < 0) ||
             (buffer_addr < 0)) {
@@ -471,13 +471,13 @@ static void update_disk() {
         case 1:
             /* Read command
             Copy from disk to memory */
-            memcpy(&g_dmem[buffer_addr], g_disk.data[sector], DISK_SECTOR_SIZE);
-            g_max_memory_index = MAX(g_max_memory_index, buffer_addr + DISK_SECTOR_SIZE - 1);
+            memcpy(&g_dmem[buffer_addr], g_disk.data[sector], DISK_SECTOR_SIZE_INT*4);
+            g_max_memory_index = MAX(g_max_memory_index, buffer_addr + DISK_SECTOR_SIZE_INT - 1);
             break;
         case 2:
             /* Write command
             Copy from memory to disk */
-            memcpy(g_disk.data[sector], &g_dmem[buffer_addr], DISK_SECTOR_SIZE);
+            memcpy(g_disk.data[sector], &g_dmem[buffer_addr], DISK_SECTOR_SIZE_INT*4);
             break;
         default:
             break;
@@ -516,7 +516,7 @@ static void load_disk_file(char const* file_name) {
     /* stops when either (n-1) characters are read, or /n is read
     We want to read the /n char so it won't get in to the next line */
     while (fgets(line_buffer, DATA_LINE_LEN + 2, diskin_file) != NULL) {
-        sscanf_s(line_buffer, "%hhX", &g_disk.data[line_count / DISK_SECTOR_SIZE][line_count % DISK_SECTOR_SIZE]);
+        sscanf_s(line_buffer, "%X", &g_disk.data[line_count / DISK_SECTOR_SIZE_INT][line_count % DISK_SECTOR_SIZE_INT]);
         line_count++;
     }
     fclose(diskin_file);
@@ -577,7 +577,7 @@ static void write_disk_file(char const* file_name) {
     /* Writes the disk data file */
     FILE* output_disk_file = open_and_validate_file(file_name, "w");
     for (int i = 0; i < DISK_SECTOR_NUM; i++) {
-        for (int j = 0; j < DISK_SECTOR_SIZE; j++) {
+        for (int j = 0; j < DISK_SECTOR_SIZE_INT; j++) {
             fprintf(output_disk_file, "%08X\n", (g_disk.data)[i][j]);
         }
     }

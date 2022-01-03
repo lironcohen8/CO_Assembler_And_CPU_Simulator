@@ -12,8 +12,8 @@
 
 #define MONITOR_DIM                 (256)
 
-#define DISK_SECTOR_SIZE            (512)
-#define DISK_BUFFER_SIZE            DISK_SECTOR_SIZE / 4
+#define DISK_SECTOR_SIZE_INT        (128)
+#define DISK_BUFFER_SIZE            DISK_SECTOR_SIZE_INT / 4
 #define DISK_SECTOR_NUM             (128)
 #define DISK_HANDLING_TIME          (1024)
 
@@ -78,7 +78,7 @@ typedef struct {
 } asm_cmd_t;
 
 typedef struct {
-    unsigned char data[DISK_SECTOR_NUM][DISK_SECTOR_SIZE];
+    int data[DISK_SECTOR_NUM][DISK_SECTOR_SIZE_INT];
     unsigned int time_in_cmd;
 } disk_t;
 
