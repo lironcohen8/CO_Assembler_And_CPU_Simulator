@@ -38,6 +38,7 @@ Main:	add $s0, $zero, $zero, $imm1, 0X100, 0	# s0 set for the address of first v
 	add $s2, $zero, $zero, $imm1, 0x120, 0	# s2 set for the address of first value in mat C 
 	add $t0, $zero, $zero, $zero, 0, 0		
 
+	sll $sp, $imm1, $imm2, $zero, 1, 11		# set $sp = 1 << 11 = 2048
 	add $sp, $sp, $imm2, $zero, 0, -2		# adjust stack for 2 items		
 	sw $t0, $sp, $imm2, $zero, 0, 1			# save curr Row in $sp+1
 	sw $t1, $sp, $imm2, $zero, 0, 0			# save curr Col in $sp+0	
